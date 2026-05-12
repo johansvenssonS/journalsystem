@@ -1,6 +1,7 @@
 package com.example.journalsystem.entities;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 
 import java.util.ArrayList;
@@ -18,15 +19,13 @@ public class Sjukhus {
     private String telefon;
 
 
-    /// JsonbackReference berättar vad som får serialiseras
-    /// använde de när det blev en evightesloop men nu funkar det utan
+
     @ManyToOne
     @JoinColumn(name = "region_id")
-    //@JsonBackReference
     private Region region;
 
 
-    @OneToMany(mappedBy = "sjukhus")
+    @OneToMany(mappedBy = "sjukhus", fetch = FetchType.EAGER)
     private final List<Avdelning> avdelningar = new ArrayList<>();
 
 
@@ -48,6 +47,10 @@ public class Sjukhus {
     public Region getRegion() {
         return region;
 
+    }
+
+    public List<Avdelning> getAvdelningar() {
+        return avdelningar;
     }
 
     public Long getId() {

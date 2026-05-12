@@ -19,7 +19,6 @@ public class Region {
     private String organisationsNummer;
 
     @OneToMany(mappedBy = "region")
-    //@JsonManagedReference
     private final List<Sjukhus> sjukhus = new ArrayList<>();
 
 
