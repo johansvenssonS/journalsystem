@@ -8,7 +8,7 @@ public class SjukhusDTO {
     private String adress;
     private String telefon;
     private String regionNamn;
-    private List<String> avdelningar;
+    //private List<String> avdelningar;
 
 
     public SjukhusDTO() {

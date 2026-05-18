@@ -18,7 +18,6 @@ public class Avdelning {
     @ManyToOne
     @JoinColumn(name = "specialisering_id")
     private Specialisering specialisering;
-
     @ManyToOne
     @JoinColumn(name = "sjukhus_id")
     private Sjukhus sjukhus;
