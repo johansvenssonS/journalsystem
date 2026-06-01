@@ -5,18 +5,10 @@ Status: `[ ]` ej påbörjad &nbsp;|&nbsp; `[~]` pågående &nbsp;|&nbsp; `[x]` k
 
 ---
 
-## 🏥 Systemadministratör
 
-> Ansvarar för att sätta upp organisationsstrukturen i systemet.
-
-- [ ] **US-01** — Som administratör vill jag kunna skapa en region så att sjukhus kan kopplas till rätt landsting/region.
-- [ ] **US-02** — Som administratör vill jag kunna lägga till ett sjukhus och koppla det till en region så att avdelningar kan skapas under det.
-- [ ] **US-03** — Som administratör vill jag kunna skapa avdelningar med namn, våningsplan och specialisering så att personal och patienter kan kopplas dit.
-- [ ] **US-04** — Som administratör vill jag kunna registrera ny personal med namn, personnummer, roll och avdelning så att de kan logga in och arbeta i systemet.
-- [ ] **US-05** — Som administratör vill jag kunna se en lista över all personal på ett sjukhus filtrerad per avdelning och roll.
-
----
-
+## ️ Aveldning
+- [ ] **US-1** — En avdelning kopplas till Patient,läkare osv. .
+- [ ] **US-2** — En Läkare/sjuksköterska/undersköterska ska bara se info kopplat till patienter på deras avdelning.
 ## 👨‍⚕️ Läkare
 
 > Har bred åtkomst — kan läsa hela journalen, ställa diagnoser och ordinera åtgärder.
@@ -52,6 +44,12 @@ Status: `[ ]` ej påbörjad &nbsp;|&nbsp; `[~]` pågående &nbsp;|&nbsp; `[x]` k
 - [ ] **US-31** — Som undersköterska ska jag *inte* kunna se diagnoser eller journalanteckningar — systemet ska neka åtkomst.
 
 ---
+## Patient 
+
+- [ ] **US-32** — Som patient vill jag se mina journalposter, vårdkontaker, diagnoser etc.
+- [ ] **US-33** — Som patient vill jag se mina uppgifter användarnamn,email,adress
+- [ ] **US-34** — Som patient vill jag kunna ändra mina uppgifter användarnamn,email,adress
+- [ ] **US-35** — Som patient vill jag kunna se mina bokningar. 
 
 ## 🗂️ Receptionist / Vårdadministratör
 
@@ -61,14 +59,15 @@ Status: `[ ]` ej påbörjad &nbsp;|&nbsp; `[~]` pågående &nbsp;|&nbsp; `[x]` k
 - [ ] **US-41** — Som receptionist vill jag kunna söka upp en patient och se deras kontaktuppgifter och nödkontakt.
 - [ ] **US-42** — Som receptionist ska jag *inte* kunna se journalposter, diagnoser eller medicinsk data — systemet ska neka åtkomst.
 - [ ] **US-43** — Som receptionist vill jag kunna uppdatera en patients kontaktuppgifter (adress, telefon, email).
+- [ ] **US-44** — Som receptionist vill jag kunna boka in patient till möte med läkare.
 
 ---
 
-## 🔍 Audit & Säkerhet
+## 🔍 Audit & Säkerhet & Admin
 
 > Krav som gäller systemet i stort, inte en specifik användarroll.
 
-- [ ] **US-50** — Som systemet vill jag logga varje gång en journalpost läses eller ändras, med tidpunkt, användare och IP-adress.
+- [ ] **US-50** — Som systemet vill jag logga varje gång en journalpost läses eller ändras, med tidpunkt, användare.
 - [ ] **US-51** — Som systemet vill jag neka åtkomst till patientdata om den inloggade personalen tillhör en annan avdelning och det inte finns en aktiv vårdkontakt som motiverar åtkomsten.
 - [ ] **US-52** — Som systemet vill jag returnera HTTP 403 med ett beskrivande felmeddelande när en användare försöker utföra en handling de inte har behörighet till.
 - [ ] **US-53** — Som administratör vill jag kunna se audit-loggen för en specifik patient — vem som öppnat journalen och när.
