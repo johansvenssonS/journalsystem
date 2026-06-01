@@ -1,28 +1,29 @@
 package com.example.journalsystem.service;
 
 
-import com.example.journalsystem.entities.CareContact;
-import com.example.journalsystem.entities.CareContactDTO;
-import com.example.journalsystem.entities.CareContactMapper;
+import com.example.journalsystem.entities.*;
 import com.example.journalsystem.exceptions.ResourceNotFoundException;
+import com.example.journalsystem.repository.CareContactRepository;
 import com.example.journalsystem.repository.JournalRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 
 @Service
-public class JournalService {
-    public final JournalRepository journalRepository;
+public class CareContactService {
+    public final CareContactRepository careContactRepository;
     public final CareContactMapper careContactMapper;
 
 
-    public JournalService(JournalRepository journalRepository, CareContactMapper careContactMapper) {
-        this.journalRepository = journalRepository;
+
+    public CareContactService(CareContactMapper careContactMapper, JournalEntryMapper journalEntryMapper, CareContactRepository careContactRepository) {
+        this.careContactRepository = careContactRepository;
         this.careContactMapper = careContactMapper;
+
     }
 
     public List<CareContactDTO> getAllCareContacts(){
-        return journalRepository.findAll().stream()
+        return careContactRepository.findAll().stream()
                 .map(careContact -> new CareContactDTO(
                         careContact.getId(),
                         careContact.getDepartmentId(),
@@ -33,10 +34,12 @@ public class JournalService {
                 )).toList();
     }
 
-    public CareContactDTO getById(Long id){
-        CareContact careContact = journalRepository.findById(id)
-                .orElseThrow(()-> new ResourceNotFoundException("Vårdkontakt med id: "+ id + "hittades inte"));
+    public CareContactDTO getCareContactById(Long id){
+        CareContact careContact = careContactRepository.findById(id)
+                .orElseThrow(()-> new ResourceNotFoundException("Vårdkontakt med id: "+ id + " hittades inte"));
         return careContactMapper.toDto(careContact);
     }
+
+
 
 }
