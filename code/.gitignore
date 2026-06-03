@@ -1,0 +1,45 @@
+# ========================
+# SECRETS & CONFIG
+# ========================
+src/main/resources/application.properties
+src/main/resources/application-*.properties
+src/main/resources/application.yml
+src/main/resources/application-*.yml
+
+# ========================
+# BUILD OUTPUT
+# ========================
+target/
+
+# ========================
+# MAVEN
+# ========================
+.mvn/wrapper/maven-wrapper.jar
+!mvn
+!mvnw.cmd
+
+# ========================
+# IDE - IntelliJ
+# ========================
+.idea/
+*.iml
+*.iws
+*.ipr
+
+# ========================
+# IDE - VS Code
+# ========================
+.vscode/
+
+# ========================
+# IDE - Eclipse
+# ========================
+.classpath
+.project
+.settings/
+
+# ========================
+# OS
+# ========================
+.DS_Store
+Thumbs.db
