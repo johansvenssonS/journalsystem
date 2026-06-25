@@ -1,10 +1,13 @@
 package com.example.journalsystem.service;
 
 
+import com.example.journalsystem.dto.PatientMedicalDto;
 import com.example.journalsystem.mapper.PatientMedicalMapper;
 import com.example.journalsystem.repository.PatientRepository;
 import com.example.journalsystem.repository.PatientMedicalRepository;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 @Service
 public class PatientMedicalService {

@@ -1,20 +1,23 @@
 package com.example.journalsystem.dto;
 
+import java.time.Instant;
+
 public class PatientDto {
     private Long id;
     private String personalNumber;
     private String firstName;
     private String lastName;
+    private Instant deletedAt;
 
     public PatientDto() {
     }
 
-
-    public PatientDto(Long id, String personalNumber, String firstName, String lastName) {
+    public PatientDto(Long id, String personalNumber, String firstName, String lastName, Instant deletedAt) {
         this.id = id;
         this.personalNumber = personalNumber;
         this.firstName = firstName;
         this.lastName = lastName;
+        this.deletedAt = deletedAt;
     }
 
     public Long getId() {
@@ -47,5 +50,13 @@ public class PatientDto {
 
     public void setLastName(String lastName) {
         this.lastName = lastName;
+    }
+
+    public Instant getDeletedAt() {
+        return deletedAt;
+    }
+
+    public void setDeletedAt(Instant deletedAt) {
+        this.deletedAt = deletedAt;
     }
 }

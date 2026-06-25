@@ -8,17 +8,16 @@ public class PatientMedicalDto {
     private Long id;
     private String allergies;
     private String bloodType;
-    private Instant createdAt;
 
     public PatientMedicalDto() {
 
     }
 
-    public PatientMedicalDto(Long id, String address, String allergies, Instant createdAt) {
+    public PatientMedicalDto(Long id, String address, String allergies) {
         this.id = id;
         this.allergies = allergies;
         this.bloodType = bloodType;
-        this.createdAt = createdAt;
+
     }
 
     public Long getId() {
@@ -45,11 +44,4 @@ public class PatientMedicalDto {
         this.bloodType = bloodType;
     }
 
-    public Instant getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(Instant createdAt) {
-        this.createdAt = createdAt;
-    }
 }
