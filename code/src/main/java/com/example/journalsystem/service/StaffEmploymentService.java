@@ -1,7 +1,12 @@
 package com.example.journalsystem.service;
 
+import com.example.journalsystem.dto.StaffContactDto;
 import com.example.journalsystem.dto.StaffEmploymentDto;
 
+import com.example.journalsystem.entities.Staff;
+import com.example.journalsystem.entities.StaffContact;
+import com.example.journalsystem.entities.StaffEmployment;
+import com.example.journalsystem.exceptions.ResourceNotFoundException;
 import com.example.journalsystem.mapper.StaffEmploymentMapper;
 import com.example.journalsystem.repository.DepartmentRepository;
 import com.example.journalsystem.repository.RoleRepository;
@@ -39,4 +44,10 @@ public class StaffEmploymentService {
                 .toList();
     }
 
+
+    public StaffEmploymentDto getStaffEmploymentById(Long id) {
+        StaffEmployment staffEmployment = staffEmploymentRepository.findById(id)
+                .orElseThrow(()-> new ResourceNotFoundException("Personalanställning med id: " + id + " hittads inte"));
+        return staffEmploymentMapper.toDto(staffEmployment);
+    }
 }

@@ -5,6 +5,7 @@ import com.example.journalsystem.repository.StaffRepository;
 import com.example.journalsystem.service.StaffService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -24,5 +25,11 @@ public class StaffController {
     public ResponseEntity<List<StaffDto>> getAll() {
         return
                 ResponseEntity.ok(staffService.getAll());
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<StaffDto> getById(@PathVariable Long id) {
+        return ResponseEntity.ok(staffService.getStaffById(id));
+
     }
 }

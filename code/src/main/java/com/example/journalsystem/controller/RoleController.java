@@ -26,4 +26,6 @@ public class RoleController {
                 ResponseEntity.ok(roleService.getAll());
     }
 
+
+
 }

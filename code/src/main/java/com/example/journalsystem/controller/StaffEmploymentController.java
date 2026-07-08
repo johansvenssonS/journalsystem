@@ -1,6 +1,7 @@
 // ========== CONTROLLER ==========
 package com.example.journalsystem.controller;
 
+import com.example.journalsystem.dto.StaffContactDto;
 import com.example.journalsystem.dto.StaffEmploymentDto;
 import com.example.journalsystem.service.StaffEmploymentService;
 import org.springframework.http.HttpStatus;
@@ -19,9 +20,14 @@ public class StaffEmploymentController {
         this.staffEmploymentService = staffEmploymentService;
     }
 
-    // Get all employments
     @GetMapping
     public ResponseEntity<List<StaffEmploymentDto>> getAll() {
         return ResponseEntity.ok(staffEmploymentService.getAll());
     }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<StaffEmploymentDto> getById(@PathVariable Long id) {
+        return ResponseEntity.ok(staffEmploymentService.getStaffEmploymentById(id));
+    }
+
 }

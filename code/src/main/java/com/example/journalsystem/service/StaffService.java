@@ -1,6 +1,8 @@
 package com.example.journalsystem.service;
 
 import com.example.journalsystem.dto.StaffDto;
+import com.example.journalsystem.entities.Staff;
+import com.example.journalsystem.exceptions.ResourceNotFoundException;
 import com.example.journalsystem.mapper.StaffMapper;
 import com.example.journalsystem.repository.StaffRepository;
 import org.springframework.stereotype.Service;
@@ -22,5 +24,11 @@ public class StaffService {
         return staffRepository.findAll().stream()
                 .map(staffMapper::toDto)
                 .toList();
+    }
+
+    public StaffDto getStaffById(Long id) {
+        Staff staff = staffRepository.findById(id)
+                .orElseThrow(()-> new ResourceNotFoundException("Personal med Id:" + id + " hittades inte"));
+        return staffMapper.toDto(staff);
     }
 }

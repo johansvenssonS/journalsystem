@@ -2,6 +2,8 @@
 package com.example.journalsystem.service;
 
 import com.example.journalsystem.dto.StaffContactDto;
+import com.example.journalsystem.entities.StaffContact;
+import com.example.journalsystem.exceptions.ResourceNotFoundException;
 import com.example.journalsystem.mapper.StaffContactMapper;
 import com.example.journalsystem.repository.StaffContactRepository;
 import com.example.journalsystem.repository.StaffRepository;
@@ -29,5 +31,11 @@ public class StaffContactService {
         return staffContactRepository.findAll().stream()
                 .map(staffContactMapper::toDto)
                 .toList();
+    }
+
+    public StaffContactDto getStaffContactById(Long id) {
+        StaffContact staffContact = staffContactRepository.findById(id)
+                .orElseThrow(()-> new ResourceNotFoundException("Personal kontaktuppgifter med id: " + id + "hittades inte"));
+        return staffContactMapper.toDto(staffContact);
     }
 }
