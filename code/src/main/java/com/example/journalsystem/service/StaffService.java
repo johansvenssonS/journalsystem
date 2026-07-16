@@ -1,6 +1,6 @@
 package com.example.journalsystem.service;
 
-import com.example.journalsystem.dto.StaffDto;
+import com.example.journalsystem.dto.StaffDTO;
 import com.example.journalsystem.entities.Staff;
 import com.example.journalsystem.exceptions.ResourceNotFoundException;
 import com.example.journalsystem.mapper.StaffMapper;
@@ -20,13 +20,13 @@ public class StaffService {
         this.staffMapper = staffMapper;
     }
 
-    public List<StaffDto> getAll() {
+    public List<StaffDTO> getAll() {
         return staffRepository.findAll().stream()
                 .map(staffMapper::toDto)
                 .toList();
     }
 
-    public StaffDto getStaffById(Long id) {
+    public StaffDTO getStaffById(Long id) {
         Staff staff = staffRepository.findById(id)
                 .orElseThrow(()-> new ResourceNotFoundException("Personal med Id:" + id + " hittades inte"));
         return staffMapper.toDto(staff);

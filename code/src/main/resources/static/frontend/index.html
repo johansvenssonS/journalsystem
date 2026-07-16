@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Journal System Frontend</title>
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+<main class="container">
+  <h1>Journal System</h1>
+
+  <section class="card">
+    <h2>Schedule by staff and date</h2>
+    <form id="scheduleForm">
+      <label>
+        Staff
+        <select id="staffSelect" required>
+          <option value="">-- Select staff --</option>
+        </select>
+      </label>
+
+      <label>
+        Date
+        <input id="scheduleDateInput" type="date" required />
+      </label>
+
+      <button type="submit">Load schedule</button>
+    </form>
+    <p id="scheduleMsg" class="msg"></p>
+    <ul id="scheduleList"></ul>
+  </section>
+
+  <section class="card">
+    <h2>Patients</h2>
+    <button id="loadPatientsBtn">Load patients</button>
+    <ul id="patientsList"></ul>
+  </section>
+
+  <section class="card">
+    <h2>Get patient by ID</h2>
+    <form id="patientByIdForm">
+      <label>
+        Patient ID
+        <input id="patientIdInput" type="number" required />
+      </label>
+      <button type="submit">Load patient</button>
+    </form>
+    <p id="patientByIdResult" class="msg"></p>
+  </section>
+
+  <section class="card">
+    <h2>Get patient contact by ID</h2>
+    <form id="patientContactByIdForm">
+      <label>
+        Patient Contact ID
+        <input id="patientContactIdInput" type="number" required />
+      </label>
+      <button type="submit">Load patient contact</button>
+    </form>
+    <p id="patientContactByIdResult" class="msg"></p>
+  </section>
+
+  <section class="card">
+    <h2>Get role by ID</h2>
+    <form id="roleByIdForm">
+      <label>
+        Role ID
+        <input id="roleIdInput" type="number" required />
+      </label>
+      <button type="submit">Load role</button>
+    </form>
+    <p id="roleByIdResult" class="msg"></p>
+  </section>
+
+  <section class="card">
+    <h2>Get patient medical by ID</h2>
+    <form id="patientMedicalByIdForm">
+      <label>
+        Patient Medical ID
+        <input id="patientMedicalIdInput" type="number" required />
+      </label>
+      <button type="submit">Load patient medical</button>
+    </form>
+    <p id="patientMedicalByIdResult" class="msg"></p>
+  </section>
+
+  <div id="staffInfo"></div>
+
+  <script>
+    async function getStaff() {
+      const response = await fetch('http://localhost:8080/staff/1');
+      const staff = await response.json();  // Konvertera JSON till objekt
+
+      // Visa data
+      document.getElementById('staffInfo').innerHTML = `
+      <h2>${staff.firstName} ${staff.lastName}</h2>
+      <p>Id: ${staff.id}</p>
+      <p>Personnummer: ${staff.personalNumber}</p>
+    `;
+    }
+
+    getStaff();
+  </script>
+
+</main>
+
+<script type="module" src="./js/app.js"></script>
+</body>
+</html>

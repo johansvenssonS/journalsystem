@@ -27,4 +27,10 @@ public class PatientContactService {
         return patientContactRepository.findAll().stream().map(patientContactMapper::toDto).toList();
     }
 
+    public PatientContactDto getPatientContactById(Long id) {
+        var contact = patientContactRepository.findById(id)
+                .orElseThrow(() -> new com.example.journalsystem.exceptions.ResourceNotFoundException("Patient contact med Id: " + id + " hittades inte"));
+        return patientContactMapper.toDto(contact);
+    }
+
 }

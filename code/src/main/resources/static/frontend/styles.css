@@ -1,0 +1,71 @@
+:root {
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+body {
+  margin: 0;
+  background: #f6f7fb;
+  color: #222;
+}
+
+.container {
+  max-width: 900px;
+  margin: 2rem auto;
+  padding: 0 1rem;
+}
+
+h1 {
+  margin-bottom: 1.5rem;
+}
+
+.card {
+  background: white;
+  border-radius: 10px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  box-shadow: 0 1px 8px rgba(0,0,0,0.07);
+}
+
+form {
+  display: grid;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+label {
+  display: grid;
+  gap: 0.35rem;
+}
+
+input, textarea, button {
+  font: inherit;
+  padding: 0.6rem;
+}
+
+button {
+  cursor: pointer;
+  border: 1px solid #ccc;
+  background: #f0f0f0;
+  border-radius: 6px;
+}
+
+button:hover {
+  background: #e7e7e7;
+}
+
+ul {
+  padding-left: 1.25rem;
+}
+
+.msg {
+  min-height: 1.25rem;
+  font-size: 0.95rem;
+}
+
+.msg.ok {
+  color: #0a7a35;
+}
+
+.msg.error {
+  color: #b42318;
+}

@@ -1,16 +1,16 @@
 package com.example.journalsystem.dto;
 
-public class StaffDto {
+public class StaffDTO {
 
     private Long id;
     private String personalNumber;
     private String firstName;
     private String lastName;
 
-    public StaffDto() {
+    public StaffDTO() {
     }
 
-    public StaffDto(Long id, String personalNumber, String firstName, String lastName) {
+    public StaffDTO(Long id, String personalNumber, String firstName, String lastName) {
         this.id = id;
         this.personalNumber = personalNumber;
         this.firstName = firstName;

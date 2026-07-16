@@ -5,6 +5,7 @@ import com.example.journalsystem.dto.RoleDto;
 import com.example.journalsystem.service.RoleService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -24,6 +25,11 @@ public class RoleController {
     public ResponseEntity<List<RoleDto>> getAll() {
         return
                 ResponseEntity.ok(roleService.getAll());
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<RoleDto> getById(@PathVariable Long id) {
+        return ResponseEntity.ok(roleService.getRoleById(id));
     }
 
 

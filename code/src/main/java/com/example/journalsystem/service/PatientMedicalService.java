@@ -27,4 +27,10 @@ public class PatientMedicalService {
         return patientMedicalRepository.findAll().stream().map(patientMedicalMapper::toDto).toList();
     }
 
+    public PatientMedicalDto getPatientMedicalById(Long id) {
+        var pm = patientMedicalRepository.findById(id)
+                .orElseThrow(() -> new com.example.journalsystem.exceptions.ResourceNotFoundException("Patient medical med Id: " + id + " hittades inte"));
+        return patientMedicalMapper.toDto(pm);
+    }
+
 }
