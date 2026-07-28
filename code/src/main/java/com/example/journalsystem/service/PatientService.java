@@ -1,6 +1,7 @@
 package com.example.journalsystem.service;
 
 import com.example.journalsystem.dto.PatientDto;
+import com.example.journalsystem.entities.Patient;
 import com.example.journalsystem.repository.PatientRepository;
 import com.example.journalsystem.mapper.PatientMapper;
 
@@ -29,4 +30,26 @@ public class PatientService {
                 .orElseThrow(() -> new com.example.journalsystem.exceptions.ResourceNotFoundException("Patient med Id: " + id + " hittades inte"));
         return patientMapper.toDto(patient);
     }
+    public PatientDto createPatient(PatientDto patientDto) {
+//        if (productRepository.existsByName(dto.getName())) {
+//            throw new DuplicateProductException("En produkt med det namnet finns redan");
+//        }
+        Patient patient = patientMapper.toEntity(patientDto);
+        Patient savedPatient = patientRepository.save(patient);
+        return patientMapper.toDto(savedPatient);
+    }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+

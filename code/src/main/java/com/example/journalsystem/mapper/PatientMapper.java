@@ -6,6 +6,7 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class PatientMapper {
+
     public PatientDto toDto(Patient patient){
         return new PatientDto(
                 patient.getId(),
@@ -14,5 +15,20 @@ public class PatientMapper {
                 patient.getLastName(),
                 patient.getDeletedAt()
         );
+    }
+
+    public Patient toEntity(PatientDto patientDto) {
+        if (patientDto == null) {
+            return null;
+        }
+
+        Patient patient = new Patient();
+        patient.setId(patientDto.getId());
+        patient.setPersonalNumber(patientDto.getPersonalNumber());
+        patient.setFirstName(patientDto.getFirstName());
+        patient.setLastName(patientDto.getLastName());
+        patient.setDeletedAt(patientDto.getDeletedAt());
+
+        return patient;
     }
 }
