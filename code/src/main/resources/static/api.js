@@ -44,10 +44,6 @@ export async function getPatientMedicalById(id) {
     return handleResponse(res);
 }
 
-// NOTE:
-// createPatient/createEntry were removed because backend currently has no POST endpoints.
-// Add back later when your controllers include @PostMapping.
-
 export async function getStaff() {
     const res = await fetch(`${API_BASE_URL}/staff`);
     return handleResponse(res);
