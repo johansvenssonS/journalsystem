@@ -2,7 +2,7 @@ package com.example.journalsystem.entities;
 
 import jakarta.persistence.*;
 
-@Entity
+@jakarta.persistence.Entity
 @Table(name = "patient_contact")
 public class PatientContact {
     @Id

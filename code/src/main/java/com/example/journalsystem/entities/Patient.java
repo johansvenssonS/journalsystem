@@ -5,7 +5,7 @@ import jakarta.persistence.*;
 import java.time.Instant;
 import java.util.List;
 
-@Entity
+@jakarta.persistence.Entity
 @Table(name = "patient")
 public class Patient {
 

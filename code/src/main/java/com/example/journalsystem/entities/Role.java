@@ -4,7 +4,7 @@ import jakarta.persistence.*;
 
 import java.util.List;
 
-@Entity
+@jakarta.persistence.Entity
 @Table(name = "role")
 public class Role {
 

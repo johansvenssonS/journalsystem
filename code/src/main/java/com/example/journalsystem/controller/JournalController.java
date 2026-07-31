@@ -21,7 +21,6 @@ public class JournalController {
         this.journalEntryService = journalEntryService;
     }
 
-
     @GetMapping("journalentry")
     public ResponseEntity<List<JournalEntryDTO>> getAllJournalEntries() {
         return ResponseEntity.ok(journalEntryService.getAllJournalEntries());

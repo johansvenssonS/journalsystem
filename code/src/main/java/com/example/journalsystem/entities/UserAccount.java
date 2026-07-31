@@ -7,7 +7,7 @@ import org.hibernate.annotations.ColumnDefault;
 
 import java.time.Instant;
 
-@Entity
+@jakarta.persistence.Entity
 @Table(name = "user_account")
 public class UserAccount {
 
