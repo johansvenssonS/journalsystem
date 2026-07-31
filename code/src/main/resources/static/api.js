@@ -1,5 +1,3 @@
-import { API_BASE_URL } from "./config.js";
-
 async function handleResponse(res) {
     const contentType = res.headers.get("content-type") || "";
     const isJson = contentType.includes("application/json");
@@ -17,35 +15,36 @@ async function handleResponse(res) {
 
 // ---- Patients ----
 export async function getPatients() {
-    const res = await fetch(`${API_BASE_URL}/patients`);
+    const res = await fetch(`/patients`);
     return handleResponse(res);
 }
 
 export async function getPatientById(id) {
-    const res = await fetch(`${API_BASE_URL}/patients/${id}`);
+    const res = await fetch(`/patients/${id}`);
     return handleResponse(res);
 }
 
 // ---- Patient contacts ----
 export async function getPatientContactById(id) {
-    const res = await fetch(`${API_BASE_URL}/patient-contacts/${id}`);
+    const res = await fetch(`/patient-contacts/${id}`);
     return handleResponse(res);
 }
 
 // ---- Roles ----
 export async function getRoleById(id) {
-    const res = await fetch(`${API_BASE_URL}/roles/${id}`);
+    const res = await fetch(`/roles/${id}`);
     return handleResponse(res);
 }
 
 // ---- Patient medical ----
 export async function getPatientMedicalById(id) {
-    const res = await fetch(`${API_BASE_URL}/patient-medicals/${id}`);
+    const res = await fetch(`/patient-medicals/${id}`);
     return handleResponse(res);
 }
 
+// ---- Staff ----
 export async function getStaff() {
-    const res = await fetch(`${API_BASE_URL}/staff`);
+    const res = await fetch(`/staff`);
     return handleResponse(res);
 }
 
@@ -54,6 +53,20 @@ export async function getAppointmentsByStaffAndDate(staffId, date) {
         staffId: String(staffId),
         date
     });
-    const res = await fetch(`${API_BASE_URL}/appointments/schedule?${params.toString()}`);
+    const res = await fetch(`/appointments/schedule?${params.toString()}`);
     return handleResponse(res);
 }
+
+// ---- User account ----
+export async function getCurrentUser(){
+    const res = await fetch('auth/me');
+    return handleResponse(res);
+}
+
+
+
+
+
+
+
+

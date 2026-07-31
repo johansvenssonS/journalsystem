@@ -21,6 +21,7 @@ public class RoleController {
         this.roleService = roleService;
 
     }
+    //@PreAuthorize("hasAuthority('nurse')")
     @GetMapping
     public ResponseEntity<List<RoleDto>> getAll() {
         return

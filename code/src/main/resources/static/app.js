@@ -1,7 +1,8 @@
 import {
     getPatients,
     getPatientById,
-    getAppointmentsByStaffAndDate
+    getAppointmentsByStaffAndDate,
+    getCurrentUser
 } from "./api.js";
 
 // Helper Functions (Kept from your original file)
@@ -153,3 +154,24 @@ function appendPatientRow(tbody, p) {
     `;
     tbody.appendChild(tr);
 }
+// only for Dr. make it dynamic by adding role info to the whoAmI function
+async function renderCurrentUser(){
+ const username = document.getElementById("current-user-name");
+
+// 1. Get raw string from backend ("magnus.karlsson.")
+    const rawUser = await getCurrentUser();
+
+    // 2. Format: "magnus.karlsson." ➔ "Dr. Magnus Karlsson"
+    const formattedName = "Dr. " + rawUser
+        .split('.')
+        .filter(Boolean) // Removes trailing empty strings
+        .map(part => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
+        .join(' ');
+
+    // 3. Update the DOM
+    username.textContent = formattedName;
+}
+
+
+
+document.addEventListener("DOMContentLoaded", renderCurrentUser);
