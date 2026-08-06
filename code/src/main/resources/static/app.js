@@ -2,7 +2,8 @@ import {
     getPatients,
     getPatientById,
     getAppointmentsByStaffAndDate,
-    getCurrentUser
+    getCurrentUser,
+    createPatient
 } from "./api.js";
 
 // Helper Functions (Kept from your original file)
@@ -52,6 +53,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const searchBtn = document.getElementById("searchPatientBtn");
     if(searchBtn) {
         searchBtn.addEventListener("click", handleSearchPatient);
+    }
+    // Attach Create Patient Form Listener
+    const createForm = document.getElementById("createPatientForm");
+    if (createForm) {
+        createForm.addEventListener("submit", handleCreatePatient);
     }
 });
 
@@ -117,6 +123,31 @@ async function renderPatientsList() {
 
     } catch (err) {
         tbody.innerHTML = `<tr><td colspan="5" style="color:red;">Kunde inte ladda patienter: ${err.message}</td></tr>`;
+    }
+}
+// 3. Form Submit Handler Function
+async function handleCreatePatient(event) {
+    event.preventDefault();
+
+    const firstName = document.getElementById("patientFirstName").value.trim();
+    const lastName = document.getElementById("patientLastName").value.trim();
+    const personalNumber = document.getElementById("patientPersonalNumber").value.trim();
+
+    const payload = {
+        firstName,
+        lastName,
+        personalNumber
+    };
+
+    try {
+        await createPatient(payload);
+
+        // Reset form and reload list upon success
+        document.getElementById("createPatientForm").reset();
+        await renderPatientsList();
+        alert("Patienten skapades!");
+    } catch (err) {
+        alert(`Kunde inte skapa patient: ${err.message}`);
     }
 }
 

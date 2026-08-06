@@ -24,7 +24,7 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 // Fully disable CSRF for non-browser REST API endpoints
-//                .csrf(csrf -> csrf.disable())
+                .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
                         // Permit /error so Spring displays 404/500 messages instead of redirecting to login
                         .requestMatchers("/auth/**", "/error").permitAll()

@@ -1,14 +1,15 @@
 package com.example.journalsystem.mapper;
 
-import com.example.journalsystem.dto.PatientDto;
+import com.example.journalsystem.dto.PatientResponse;
+import com.example.journalsystem.dto.CreatePatientRequest;
 import com.example.journalsystem.entities.Patient;
 import org.springframework.stereotype.Component;
 
 @Component
 public class PatientMapper {
 
-    public PatientDto toDto(Patient patient){
-        return new PatientDto(
+    public PatientResponse toDto(Patient patient){
+        return new PatientResponse(
                 patient.getId(),
                 patient.getPersonalNumber(),
                 patient.getFirstName(),
@@ -17,17 +18,15 @@ public class PatientMapper {
         );
     }
 
-    public Patient toEntity(PatientDto patientDto) {
-        if (patientDto == null) {
+    public Patient toEntity(CreatePatientRequest createPatientRequest) {
+        if (createPatientRequest == null) {
             return null;
         }
 
         Patient patient = new Patient();
-        patient.setId(patientDto.getId());
-        patient.setPersonalNumber(patientDto.getPersonalNumber());
-        patient.setFirstName(patientDto.getFirstName());
-        patient.setLastName(patientDto.getLastName());
-        patient.setDeletedAt(patientDto.getDeletedAt());
+        patient.setPersonalNumber(createPatientRequest.getPersonalNumber());
+        patient.setFirstName(createPatientRequest.getFirstName());
+        patient.setLastName(createPatientRequest.getLastName());
 
         return patient;
     }

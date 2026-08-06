@@ -1,10 +1,12 @@
 package com.example.journalsystem.exceptions;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @ControllerAdvice
 public class GlobalExceptionHandler {
@@ -19,4 +21,31 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(404).body(body);
     }
 
+    @ExceptionHandler(DuplicateResourceException.class)
+    public ResponseEntity<ErrorResponse> alreadyExists(DuplicateResourceException ex){
+        ErrorResponse body = new ErrorResponse(
+                409,
+                ex.getMessage(),
+                LocalDateTime.now()
+        );
+        return ResponseEntity.status(409).body(body);
+    }
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<ErrorResponse> handleValidation(MethodArgumentNotValidException ex) {
+        List<String> errors = ex.getBindingResult()
+                .getFieldErrors()
+                .stream()
+                //error.getField()
+                .map(error -> error.getField() + ": " + error.getDefaultMessage())
+                .toList();
+
+        // Instead of a generic "Valideringsfel", combine the individual errors
+        // into one readable message, e.g.:
+        // "personnummer: must not be blank, email: must be a valid email"
+        String combinedMessage = String.join(", ", errors);
+
+        ErrorResponse body = new ErrorResponse(400, combinedMessage, LocalDateTime.now(), errors);
+        return ResponseEntity.status(400).body(body);
+    }
 }

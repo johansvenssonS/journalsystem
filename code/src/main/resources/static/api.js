@@ -3,15 +3,42 @@ async function handleResponse(res) {
     const isJson = contentType.includes("application/json");
     const body = isJson ? await res.json() : await res.text();
 
-    if (!res.ok) {
-        const errorMessage =
-            (isJson && (body.message || body.error)) ||
-            `HTTP ${res.status} ${res.statusText}`;
-        throw new Error(errorMessage);
+    // Success case — nothing special to do, just return the data.
+    if (res.ok) {
+        return body;
     }
 
-    return body;
+    // From here, something went wrong. Figure out the best message to show.
+    let errorMessage;
+
+    if (isJson && body.message) {
+        // Our backend now always fills "message" with something useful,
+        // e.g. "personnummer: must not be blank, email: must be a valid email"
+        errorMessage = body.message;
+
+    } else if (isJson && Array.isArray(body.errors) && body.errors.length > 0) {
+        // Fallback: if "message" is ever missing but "errors" exists, join it ourselves
+        errorMessage = body.errors.join(", ");
+
+    } else {
+        // Last resort: nothing usable in the body
+        errorMessage = `HTTP ${res.status} ${res.statusText}`;
+    }
+
+    throw new Error(errorMessage);
 }
+
+// Helper for JSON requests
+async function postJSON(url, data) {
+    const res = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+    });
+    return handleResponse(res);
+}
+
+
 
 // ---- Patients ----
 export async function getPatients() {
@@ -19,9 +46,15 @@ export async function getPatients() {
     return handleResponse(res);
 }
 
+
+
 export async function getPatientById(id) {
     const res = await fetch(`/patients/${id}`);
     return handleResponse(res);
+}
+
+export async function createPatient(patientData) {
+    return postJSON(`/patients`, patientData);
 }
 
 // ---- Patient contacts ----

@@ -1,31 +1,30 @@
 package com.example.journalsystem.dto;
 
-import java.time.Instant;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
 
-public class PatientDto {
-    private Long id;
+public class CreatePatientRequest {
+
+    @NotBlank(message = "Personnummer får inte vara tomt")
+    @Pattern(
+            regexp = "^(19|20)?\\d{2}(0[1-9]|1[0-2])(0[1-9]|[12]\\d|3[01])[-+]?\\d{4}$",
+            message = "Ogiltigt personnummer"
+    )
     private String personalNumber;
-    private String firstName;
-    private String lastName;
-    private Instant deletedAt;
 
-    public PatientDto() {
+    @NotBlank(message = "Förnamn får inte vara tomt")
+    private String firstName;
+
+    @NotBlank(message = "Efternamn får inte vara tomt")
+    private String lastName;
+
+    public CreatePatientRequest() {
     }
 
-    public PatientDto(Long id, String personalNumber, String firstName, String lastName, Instant deletedAt) {
-        this.id = id;
+    public CreatePatientRequest(String personalNumber, String firstName, String lastName) {
         this.personalNumber = personalNumber;
         this.firstName = firstName;
         this.lastName = lastName;
-        this.deletedAt = deletedAt;
-    }
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
     }
 
     public String getPersonalNumber() {
@@ -50,13 +49,5 @@ public class PatientDto {
 
     public void setLastName(String lastName) {
         this.lastName = lastName;
-    }
-
-    public Instant getDeletedAt() {
-        return deletedAt;
-    }
-
-    public void setDeletedAt(Instant deletedAt) {
-        this.deletedAt = deletedAt;
     }
 }

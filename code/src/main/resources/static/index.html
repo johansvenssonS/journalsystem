@@ -77,6 +77,30 @@
 
     <div class="card mb-4">
       <div class="card-header">
+        <h3>Ny patient</h3>
+        <span class="api-badge">POST /api/patients</span>
+      </div>
+      <form id="createPatientForm">
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="patientFirstName">Förnamn</label>
+            <input type="text" id="patientFirstName" class="form-control" placeholder="t.ex. Anna" required>
+          </div>
+          <div class="form-group">
+            <label for="patientLastName">Efternamn</label>
+            <input type="text" id="patientLastName" class="form-control" placeholder="t.ex. Svensson" required>
+          </div>
+          <div class="form-group full-width">
+            <label for="patientPersonalNumber">Personnummer</label>
+            <input type="text" id="patientPersonalNumber" class="form-control" placeholder="YYYYMMDD-XXXX" required>
+          </div>
+        </div>
+        <button type="submit" class="btn btn-primary">Spara patient</button>
+      </form>
+    </div>
+
+    <div class="card mb-4">
+      <div class="card-header">
         <h3>Sök patient via ID</h3>
         <span class="api-badge">GET /api/patients/{id}</span>
       </div>
