@@ -11,9 +11,7 @@ public class PatientMedicalMapper {
       return new PatientMedicalDto(
         patientMedical.getId(),
         patientMedical.getAllergies(),
-        patientMedical.getBloodType(),
-        patientMedical.getCreatedAt()
-
+        patientMedical.getBloodType()
       );
     }
 

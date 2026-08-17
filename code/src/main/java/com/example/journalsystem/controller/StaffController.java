@@ -1,10 +1,10 @@
 package com.example.journalsystem.controller;
 
-import com.example.journalsystem.dto.StaffDto;
-import com.example.journalsystem.repository.StaffRepository;
+import com.example.journalsystem.dto.StaffDTO;
 import com.example.journalsystem.service.StaffService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -21,8 +21,14 @@ public class StaffController {
     }
 
     @GetMapping
-    public ResponseEntity<List<StaffDto>> getAll() {
+    public ResponseEntity<List<StaffDTO>> getAll() {
         return
                 ResponseEntity.ok(staffService.getAll());
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<StaffDTO> getById(@PathVariable Long id) {
+        return ResponseEntity.ok(staffService.getStaffById(id));
+
     }
 }

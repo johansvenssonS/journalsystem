@@ -2,9 +2,10 @@ package com.example.journalsystem.entities;
 
 import jakarta.persistence.*;
 
+import java.time.Instant;
 import java.util.List;
 
-@Entity
+@jakarta.persistence.Entity
 @Table(name = "patient")
 public class Patient {
 
@@ -22,8 +23,13 @@ public class Patient {
     @Column(name = "last_name", nullable = false, length = 50)
     private String lastName;
 
+    @Column(name = "deleted_at")
+    private Instant deletedAt;
+
     @OneToOne(mappedBy = "patient")
     private PatientContact patientContact;
+
+
 
 
     public Patient() {
@@ -67,5 +73,13 @@ public class Patient {
 
     public void setPatientContact(PatientContact patientContact) {
         this.patientContact = patientContact;
+    }
+
+    public Instant getDeletedAt() {
+        return deletedAt;
+    }
+
+    public void setDeletedAt(Instant deletedAt) {
+        this.deletedAt = deletedAt;
     }
 }

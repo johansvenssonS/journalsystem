@@ -6,7 +6,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
-@Entity
+@jakarta.persistence.Entity
 @Table(name = "specialization")
 public class Specialization {
 

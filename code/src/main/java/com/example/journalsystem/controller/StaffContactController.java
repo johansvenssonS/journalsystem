@@ -24,4 +24,9 @@ public class StaffContactController {
         return ResponseEntity.ok(staffContactService.getAll());
     }
 
+    @GetMapping("/{id}")
+    public ResponseEntity<StaffContactDto> getById(@PathVariable Long id) {
+        return ResponseEntity.ok(staffContactService.getStaffContactById(id));
+
+    }
 }

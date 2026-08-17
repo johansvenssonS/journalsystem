@@ -23,4 +23,10 @@ public class RoleService {
                 .map(roleMapper::toDto)
                 .toList();
     }
+
+    public RoleDto getRoleById(Long id) {
+        var role = roleRepository.findById(id)
+                .orElseThrow(() -> new com.example.journalsystem.exceptions.ResourceNotFoundException("Role med Id: " + id + " hittades inte"));
+        return roleMapper.toDto(role);
+    }
 }

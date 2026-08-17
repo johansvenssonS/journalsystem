@@ -2,9 +2,10 @@ package com.example.journalsystem.entities;
 
 import jakarta.persistence.*;
 
+import java.util.ArrayList;
 import java.util.List;
 
-@Entity
+@jakarta.persistence.Entity
 @Table(name = "staff")
 public class Staff {
 
@@ -25,8 +26,8 @@ public class Staff {
     @OneToMany(mappedBy = "staff")
     private List<StaffContact> staffContact;
 
-    @OneToMany(mappedBy = "staff")
-    private List<StaffEmployment> staffEmployment;
+    @OneToMany(mappedBy = "staff", cascade = CascadeType.ALL)
+    private List<StaffEmployment> staffEmployment = new ArrayList<>(); // <-- Initialize here!
 
     public Staff() {
     }

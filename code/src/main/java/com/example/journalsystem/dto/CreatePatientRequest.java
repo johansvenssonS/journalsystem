@@ -1,28 +1,30 @@
 package com.example.journalsystem.dto;
 
-public class PatientDto {
-    private Long id;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
+
+public class CreatePatientRequest {
+
+    @NotBlank(message = "Personnummer får inte vara tomt")
+    @Pattern(
+            regexp = "^(19|20)?\\d{2}(0[1-9]|1[0-2])(0[1-9]|[12]\\d|3[01])[-+]?\\d{4}$",
+            message = "Ogiltigt personnummer"
+    )
     private String personalNumber;
+
+    @NotBlank(message = "Förnamn får inte vara tomt")
     private String firstName;
+
+    @NotBlank(message = "Efternamn får inte vara tomt")
     private String lastName;
 
-    public PatientDto() {
+    public CreatePatientRequest() {
     }
 
-
-    public PatientDto(Long id, String personalNumber, String firstName, String lastName) {
-        this.id = id;
+    public CreatePatientRequest(String personalNumber, String firstName, String lastName) {
         this.personalNumber = personalNumber;
         this.firstName = firstName;
         this.lastName = lastName;
-    }
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
     }
 
     public String getPersonalNumber() {

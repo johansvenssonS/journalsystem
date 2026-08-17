@@ -3,7 +3,7 @@ package com.example.journalsystem.entities;
 import jakarta.persistence.*;
 import org.springframework.beans.factory.annotation.Value;
 
-@Entity
+@jakarta.persistence.Entity
 @Table (name = "staff_contact")
 public class StaffContact {
 

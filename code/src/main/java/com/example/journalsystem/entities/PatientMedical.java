@@ -5,7 +5,7 @@ import org.hibernate.annotations.ColumnDefault;
 
 import java.time.Instant;
 
-@Entity
+@jakarta.persistence.Entity
 @Table(name = "patient_medical")
 public class PatientMedical {
     @Id
@@ -23,9 +23,6 @@ public class PatientMedical {
     @Column(name = "blood_type", length = 10)
     private String bloodType;
 
-    @ColumnDefault("CURRENT_TIMESTAMP")
-    @Column(name = "created_at", nullable = false)
-    private Instant createdAt;
 
     public PatientMedical() {
 
@@ -54,14 +51,6 @@ public class PatientMedical {
 
     public void setBloodType(String bloodType) {
         this.bloodType = bloodType;
-    }
-
-    public Instant getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(Instant createdAt) {
-        this.createdAt = createdAt;
     }
 
     public Long getId() {
