@@ -8,9 +8,10 @@ public class MeasureMapper {
     public MeasureDTO toDto(Measure measure){
         return new MeasureDTO(
                 measure.getId(),
+                measure.getJournalEntryId(),
                 measure.getPerformedBy(),
                 measure.getDescription(),
-                measure.getPerformedAt()
+                measure.getPerformedDate()
         );
     }
 }
