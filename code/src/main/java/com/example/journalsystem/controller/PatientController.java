@@ -1,6 +1,7 @@
 package com.example.journalsystem.controller;
 
 import com.example.journalsystem.dto.CreatePatientRequest;
+import com.example.journalsystem.dto.PatientDetailResponse;
 import com.example.journalsystem.dto.PatientResponse;
 import com.example.journalsystem.service.PatientService;
 import jakarta.validation.Valid;
@@ -39,6 +40,11 @@ public class PatientController {
     @GetMapping("/personal-number/{personalNumber}")
     public ResponseEntity<PatientResponse> getByPersonalNumber(@PathVariable String personalNumber) {
         return ResponseEntity.ok(patientService.getPatientByPersonalNumber(personalNumber));
+    }
+
+    @GetMapping("/{id}/details")
+    public ResponseEntity<PatientDetailResponse> getPatientDetails(@PathVariable Long id){
+        return ResponseEntity.ok(patientService.getPatientDetails(id));
     }
 }
 
