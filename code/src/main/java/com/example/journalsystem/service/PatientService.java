@@ -4,6 +4,7 @@ import com.example.journalsystem.dto.PatientResponse;
 import com.example.journalsystem.dto.CreatePatientRequest;
 import com.example.journalsystem.entities.Patient;
 import com.example.journalsystem.exceptions.DuplicateResourceException;
+import com.example.journalsystem.exceptions.ResourceNotFoundException;
 import com.example.journalsystem.repository.PatientRepository;
 import com.example.journalsystem.mapper.PatientMapper;
 
@@ -40,6 +41,12 @@ public class PatientService {
         Patient patient = patientMapper.toEntity(createPatientRequest);
         Patient savedPatient = patientRepository.save(patient);
         return patientMapper.toDto(savedPatient);
+    }
+
+    public PatientResponse getPatientByPersonalNumber(String personalNumber) {
+        var patient = patientRepository.findByPersonalNumber(personalNumber)
+                .orElseThrow(() -> new com.example.journalsystem.exceptions.ResourceNotFoundException("Patient med Id: " + personalNumber + " hittades inte"));
+        return patientMapper.toDto(patient);
     }
 }
 
