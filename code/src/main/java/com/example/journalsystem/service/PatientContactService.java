@@ -1,6 +1,8 @@
 package com.example.journalsystem.service;
 
 import com.example.journalsystem.dto.PatientContactDto;
+import com.example.journalsystem.entities.PatientContact;
+import com.example.journalsystem.exceptions.ResourceNotFoundException;
 import com.example.journalsystem.mapper.PatientContactMapper;
 import com.example.journalsystem.repository.PatientContactRepository;
 import com.example.journalsystem.repository.PatientRepository;
@@ -33,4 +35,16 @@ public class PatientContactService {
         return patientContactMapper.toDto(contact);
     }
 
+    public PatientContactDto update(Long id, PatientContactDto dto) {
+
+        var contact = patientContactRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("PatientContact med Id: " + id + " hittades inte"));
+
+        patientContactMapper.updateEntityFromDto(dto, contact);
+
+        var updatedContact = patientContactRepository.save(contact);
+        return patientContactMapper.toDto(updatedContact);
+
+
+    }
 }
