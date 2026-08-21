@@ -1,18 +1,19 @@
 package com.example.journalsystem.controller;
 
 
+import com.example.journalsystem.dto.CreateDiagnosisRequest;
+import com.example.journalsystem.dto.DiagnosisResponse;
 import com.example.journalsystem.entities.DiagnosisDTO;
 import com.example.journalsystem.service.DiagnosisService;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
-@RequestMapping
+@RequestMapping("/diagnosis")
 public class DiagnosisController {
     private final DiagnosisService diagnosisService;
 
@@ -20,15 +21,22 @@ public class DiagnosisController {
         this.diagnosisService = diagnosisService;
     }
 
-    @GetMapping("diagnosis")
+    @GetMapping()
     public ResponseEntity<List<DiagnosisDTO>> getAllDiagnosis() {
         return ResponseEntity.ok(diagnosisService.getAllDiagnosis());
         
     }
 
-    @GetMapping("diagnosis/{id}")
+    @GetMapping("/{id}")
     public ResponseEntity<DiagnosisDTO> getDiagnosisById(@PathVariable Long id) {
         return ResponseEntity.ok(diagnosisService.getDiagnosisById(id));
+    }
+
+    //Metod för att skapa diagnos med journal_entry_id
+    @PreAuthorize("hasRole('doctor')")
+    @PostMapping()
+    public ResponseEntity<DiagnosisResponse> createDiagnosis(@Valid @RequestBody CreateDiagnosisRequest createDiagnosisRequest){
+        return ResponseEntity.status(201).body(diagnosisService.createDiagnosis(createDiagnosisRequest));
     }
 
 }
