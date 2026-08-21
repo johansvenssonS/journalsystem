@@ -2,6 +2,7 @@ package com.example.journalsystem.entities;
 
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
 
 import java.sql.Timestamp;
 import java.util.List;
@@ -13,24 +14,22 @@ public class JournalEntry {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    private Long careContactId;
+
+    @NotNull
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "care_contact_id", nullable = false)
+    private CareContact careContact;
+
     private Long createdBy ;
     private Timestamp createdAt;
     private String type;
     private String content;
-
-    @OneToMany(mappedBy = "journal_entry")
-    private List<CareContact> careContact;
 
     public JournalEntry() {
     }
 
     public Long getId() {
         return id;
-    }
-
-    public Long getCareContactId() {
-        return careContactId;
     }
 
     public Long getCreatedBy() {
@@ -53,10 +52,6 @@ public class JournalEntry {
         this.id = id;
     }
 
-    public void setCareContactId(Long careContactId) {
-        this.careContactId = careContactId;
-    }
-
     public void setCreatedBy(Long createdBy) {
         this.createdBy = createdBy;
     }
@@ -73,11 +68,11 @@ public class JournalEntry {
         this.content = content;
     }
 
-    public List<CareContact> getCareContact() {
-        return careContact;
+    public void setCareContact(CareContact careContact) {
+        this.careContact = careContact;
     }
 
-    public void setCareContact(List<CareContact> careContact) {
-        this.careContact = careContact;
+    public CareContact getCareContact() {
+        return careContact;
     }
 }

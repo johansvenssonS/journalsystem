@@ -37,7 +37,7 @@ public class JournalEntryService {
                         journalEntry.getContent()
                 )).toList();
     }
-    public List<JournalEntryDTO> findByCareContact_PatientId(Long patientId) {
+    public List<JournalEntryDTO> getJournalEntriesByPatientId(Long patientId) {
         return journalRepository.findByCareContact_PatientId(patientId)
                 .stream()
                 .map(journalEntryMapper::toDto)

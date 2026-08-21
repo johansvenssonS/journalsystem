@@ -1,5 +1,6 @@
 package com.example.journalsystem.service;
 
+import com.example.journalsystem.dto.PatientDetailResponse;
 import com.example.journalsystem.dto.PatientResponse;
 import com.example.journalsystem.dto.CreatePatientRequest;
 import com.example.journalsystem.entities.Patient;
@@ -53,7 +54,7 @@ public class PatientService {
         return patientMapper.toDto(patient);
     }
 
-    public PatientResponse getPatientDetails(Long id){
+    public PatientDetailResponse getPatientDetails(Long id){
         var patient = patientRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Patient med Id: " + id + " hittades inte"));
         var patientContact = patientContactRepository.findById(id)

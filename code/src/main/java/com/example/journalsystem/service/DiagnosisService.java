@@ -39,7 +39,7 @@ public class DiagnosisService {
         return diagnosisMapper.toDto(diagnosis);
     }
 
-    public List<DiagnosisDTO> findByJournalEntry_CareContact_PatientId(Long patientId){
+    public List<DiagnosisDTO> getDiagnosisByPatientId(Long patientId){
         return diagnosisRepository.findByJournalEntry_CareContact_PatientId(patientId)
                 .stream()
                 .map(diagnosisMapper::toDto)

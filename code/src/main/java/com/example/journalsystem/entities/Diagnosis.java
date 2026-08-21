@@ -2,6 +2,7 @@ package com.example.journalsystem.entities;
 
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
 
 import java.sql.Date;
 import java.util.ArrayList;
@@ -16,7 +17,10 @@ public class Diagnosis {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private Long journalEntryId;
+    @NotNull
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "journal_entry_id", nullable = false)
+    private JournalEntry journalEntry;
 
     private Long setBy;
 
@@ -28,18 +32,11 @@ public class Diagnosis {
 
     private Date diagnosedDate;
 
-    @OneToMany(mappedBy = "diagnosis")
-    private List<JournalEntry> journalEntry = new ArrayList<>();
-
     public Diagnosis() {
     }
 
     public Long getId() {
         return id;
-    }
-
-    public Long getJournalEntryId() {
-        return journalEntryId;
     }
 
     public Long getSetBy() {
@@ -66,10 +63,6 @@ public class Diagnosis {
         this.id = id;
     }
 
-    public void setJournalEntryId(Long journalEntryId) {
-        this.journalEntryId = journalEntryId;
-    }
-
     public void setSetBy(Long setBy) {
         this.setBy = setBy;
     }
@@ -90,11 +83,7 @@ public class Diagnosis {
         this.diagnosedDate = diagnosedDate;
     }
 
-    public List<JournalEntry> getJournalEntry() {
-        return journalEntry;
-    }
-
-    public void setJournalEntry(List<JournalEntry> journalEntry) {
+    public void setJournalEntry(JournalEntry journalEntry) {
         this.journalEntry = journalEntry;
     }
 }

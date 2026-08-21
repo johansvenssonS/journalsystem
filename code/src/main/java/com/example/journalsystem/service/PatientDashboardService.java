@@ -31,8 +31,8 @@ public class PatientDashboardService {
 
         // 2. Medical history lists (US-32)
         dashboard.setCareContacts(careContactService.getCareContactsByPatientId(patientId));
-        dashboard.setJournalEntries(journalEntryService.findByCareContact_PatientId(patientId));
-        dashboard.setDiagnoses(diagnosisService.getDiagnosisById(patientId));
+        dashboard.setJournalEntries(journalEntryService.getJournalEntriesByPatientId(patientId));
+        dashboard.setDiagnoses(diagnosisService.getDiagnosisByPatientId(patientId));
 
         return dashboard;
     }
