@@ -28,7 +28,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         // Permit /error so Spring displays 404/500 messages instead of redirecting to login
                         .requestMatchers("/auth/**", "/error").permitAll()
-                        .anyRequest().authenticated()
+                        .anyRequest().authenticated()//permitAll()
                 )
                 .formLogin(Customizer.withDefaults())
                 .logout(Customizer.withDefaults());

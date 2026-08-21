@@ -1,31 +1,26 @@
-package com.example.journalsystem.entities;
+package com.example.journalsystem.dto;
 
-
-import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 
 import java.sql.Date;
 
-@jakarta.persistence.Entity
-@Table(name = "measure")
-public class Measure {
+public class CreateMeasureRequest {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-
+    @NotNull(message = "journalEntryId får inte vara tomt")
     private Long journalEntryId;
 
+    @NotNull(message = "performedBy får inte vara tomt")
     private Long performedBy;
 
+    @NotBlank(message = "description får inte vara tomt")
+    @Size(max = 255, message = "description får inte vara längre än 255 tecken")
     private String description;
 
     private Date performedDate;
 
-    public Measure() {
-    }
-
-    public Long getId() {
-        return id;
+    public CreateMeasureRequest() {
     }
 
     public Long getJournalEntryId() {
