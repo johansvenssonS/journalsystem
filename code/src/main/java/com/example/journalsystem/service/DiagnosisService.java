@@ -41,12 +41,11 @@ public class DiagnosisService {
     public DiagnosisResponse createDiagnosis(CreateDiagnosisRequest createDiagnosisRequest){
         Long journalEntryId = createDiagnosisRequest.getJournalEntryId();
 
-        if (!journalRepository.existsById(journalEntryId)) {
-            throw new ResourceNotFoundException("Journalpost med id: " + journalEntryId + " hittades inte");
-        }
+        JournalEntry journalEntry = journalRepository.findById(journalEntryId)
+                .orElseThrow(() -> new ResourceNotFoundException("Journalpost med id: " + journalEntryId + " hittades inte"));
 
         Diagnosis diagnosis = new Diagnosis();
-        diagnosis.setJournalEntryId(journalEntryId);
+        diagnosis.setJournalEntry(journalEntry);
         diagnosis.setSetBy(createDiagnosisRequest.getSetBy());
         diagnosis.setIcd10Code(createDiagnosisRequest.getIcd10Code());
         diagnosis.setName(createDiagnosisRequest.getName());
@@ -68,4 +67,10 @@ public class DiagnosisService {
         );
     }
 
+    public List<DiagnosisDTO> getDiagnosisByPatientId(Long patientId){
+        return diagnosisRepository.findByJournalEntry_CareContact_PatientId(patientId)
+                .stream()
+                .map(diagnosisMapper::toDto)
+                .toList();
+    }
 }

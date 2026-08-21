@@ -5,6 +5,7 @@ import jakarta.persistence.*;
 
 import java.sql.Date;
 import java.sql.Timestamp;
+import java.util.List;
 
 @jakarta.persistence.Entity
 @Table(name = "care_contact")
@@ -27,6 +28,9 @@ public class CareContact {
     private Timestamp dischargeDate;
 
     private String status;
+
+    @OneToMany(mappedBy = "careContact")
+    private List<JournalEntry> journalEntry;
 
 
     public CareContact() {

@@ -2,6 +2,7 @@ package com.example.journalsystem.entities;
 
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
 
 import java.sql.Date;
 
@@ -14,7 +15,10 @@ public class Diagnosis {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private Long journalEntryId;
+    @NotNull
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "journal_entry_id", nullable = false)
+    private JournalEntry journalEntry;
 
     private Long setBy;
 
@@ -33,12 +37,16 @@ public class Diagnosis {
         return id;
     }
 
-    public Long getJournalEntryId() {
-        return journalEntryId;
+    public JournalEntry getJournalEntry() {
+        return journalEntry;
     }
 
-    public void setJournalEntryId(Long journalEntryId) {
-        this.journalEntryId = journalEntryId;
+    public void setJournalEntry(JournalEntry journalEntry) {
+        this.journalEntry = journalEntry;
+    }
+
+    public Long getJournalEntryId() {
+        return journalEntry != null ? journalEntry.getId() : null;
     }
 
     public Long getSetBy() {
@@ -79,5 +87,9 @@ public class Diagnosis {
 
     public void setDiagnosedDate(Date diagnosedDate) {
         this.diagnosedDate = diagnosedDate;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
     }
 }

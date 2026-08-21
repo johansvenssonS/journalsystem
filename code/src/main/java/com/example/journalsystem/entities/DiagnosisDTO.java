@@ -8,7 +8,6 @@ import java.sql.Date;
 public class DiagnosisDTO {
 
 
-    @Id
     private Long id;
 
     private Long journalEntryId;
@@ -18,7 +17,6 @@ public class DiagnosisDTO {
     private String icd10Code;
 
     private String name;
-
     private String description;
     private Date diagnosedDate;
 

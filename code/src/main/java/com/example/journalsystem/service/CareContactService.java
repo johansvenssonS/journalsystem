@@ -40,6 +40,10 @@ public class CareContactService {
         return careContactMapper.toDto(careContact);
     }
 
-
-
+    public List<CareContactDTO> getCareContactsByPatientId(Long patientId) {
+        return careContactRepository.findByPatientId(patientId)
+                .stream()
+                .map(careContactMapper::toDto)
+                .toList();
+    }
 }

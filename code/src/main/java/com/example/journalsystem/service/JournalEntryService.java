@@ -1,6 +1,5 @@
 package com.example.journalsystem.service;
 
-import com.example.journalsystem.entities.CareContactDTO;
 import com.example.journalsystem.entities.JournalEntry;
 import com.example.journalsystem.entities.JournalEntryDTO;
 import com.example.journalsystem.entities.JournalEntryMapper;
@@ -37,5 +36,11 @@ public class JournalEntryService {
                         journalEntry.getType(),
                         journalEntry.getContent()
                 )).toList();
+    }
+    public List<JournalEntryDTO> getJournalEntriesByPatientId(Long patientId) {
+        return journalRepository.findByCareContact_PatientId(patientId)
+                .stream()
+                .map(journalEntryMapper::toDto)
+                .toList();
     }
 }
