@@ -1,9 +1,13 @@
 package com.example.journalsystem.mapper;
 
+import com.example.journalsystem.dto.PatientDetailResponse;
 import com.example.journalsystem.dto.PatientResponse;
 import com.example.journalsystem.dto.CreatePatientRequest;
 import com.example.journalsystem.entities.Patient;
+import com.example.journalsystem.entities.PatientContact;
 import org.springframework.stereotype.Component;
+
+import java.util.Optional;
 
 @Component
 public class PatientMapper {
@@ -29,5 +33,20 @@ public class PatientMapper {
         patient.setLastName(createPatientRequest.getLastName());
 
         return patient;
+    }
+
+    public PatientDetailResponse toDetailDto(Patient patient, PatientContact patientContact) {
+        return new PatientDetailResponse(
+                patient.getId(),
+                patient.getPersonalNumber(),
+                patient.getFirstName(),
+                patient.getLastName(),
+                patient.getDeletedAt(),
+                patientContact.getPhone(),
+                patientContact.getEmail(),
+                patientContact.getAddress(),
+                patientContact.getEmergencyName(),
+                patientContact.getEmergencyPhone()
+        );
     }
 }

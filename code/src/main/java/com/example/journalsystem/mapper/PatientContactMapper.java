@@ -18,15 +18,27 @@ public class PatientContactMapper {
         );
     }
 
-/*    public PatientContact toEntity(PatientContactDto dto) {
+    public PatientContact toEntity(PatientContactDto dto) {
         PatientContact patientContact = new PatientContact();
         patientContact.setPhone(dto.getPhone());
-        patientContact.getEmail(dto.getEmail());
-        patientContact.getAddress(dto.getAddress());
-        patientContact.getEmergencyName(dto.getEmergencyName());
-        patientContact.getEmergencyPhone(dto.getEmergencyPhone());
+        patientContact.setEmail(dto.getEmail());
+        patientContact.setAddress(dto.getAddress());
+        patientContact.setEmergencyName(dto.getEmergencyName());
+        patientContact.setEmergencyPhone(dto.getEmergencyPhone());
         return patientContact;
-    }*/
+    }
+    public void updateEntityFromDto(PatientContactDto dto, PatientContact patientContact) {
+        if (dto == null || patientContact == null) {
+            return;
+        }
+
+        patientContact.setPhone(dto.getPhone());
+        patientContact.setEmail(dto.getEmail());
+        patientContact.setAddress(dto.getAddress());
+        patientContact.setEmergencyName(dto.getEmergencyName());
+        patientContact.setEmergencyPhone(dto.getEmergencyPhone());
+        // Do NOT touch getId() so the primary key remains unchanged
+    }
 
 
 }

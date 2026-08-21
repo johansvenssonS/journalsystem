@@ -4,10 +4,7 @@ package com.example.journalsystem.controller;
 import com.example.journalsystem.dto.PatientContactDto;
 import com.example.journalsystem.service.PatientContactService;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -29,6 +26,13 @@ public class PatientContactController {
     @GetMapping("/{id}")
     public ResponseEntity<PatientContactDto> getById(@PathVariable Long id) {
         return ResponseEntity.ok(patientContactService.getPatientContactById(id));
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<PatientContactDto> update(
+            @PathVariable Long id,
+            @RequestBody PatientContactDto dto) {
+        return ResponseEntity.ok(patientContactService.update(id, dto));
     }
 
 }

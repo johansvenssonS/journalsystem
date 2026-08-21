@@ -9,12 +9,10 @@ public class PatientContact {
     @Column(name = "patient_id")
     private Long id;
 
-
     @MapsId
     @OneToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "patient_id", nullable = false)
     private Patient patient;
-
 
     @Column(name = "phone", length = 20)
     private String phone;
