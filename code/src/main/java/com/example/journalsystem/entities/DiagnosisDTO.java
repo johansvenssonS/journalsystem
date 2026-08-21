@@ -8,13 +8,9 @@ import java.sql.Date;
 public class DiagnosisDTO {
 
 
-    @Id
     private Long id;
-
     private Long setBy;
-
     private String name;
-
     private String description;
     private Date diagnosedDate;
 

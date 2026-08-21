@@ -8,8 +8,6 @@ import java.sql.Timestamp;
 
 public class JournalEntryDTO {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private Timestamp createdAt;
     private String type;

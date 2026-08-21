@@ -4,6 +4,7 @@ package com.example.journalsystem.service;
 import com.example.journalsystem.entities.*;
 import com.example.journalsystem.exceptions.ResourceNotFoundException;
 import com.example.journalsystem.repository.DiagnosisRepository;
+import com.example.journalsystem.repository.JournalRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -12,11 +13,13 @@ import java.util.List;
 public class DiagnosisService {
     public final DiagnosisRepository diagnosisRepository;
     public final DiagnosisMapper diagnosisMapper;
+    private final JournalRepository journalRepository;
 
 
-    public DiagnosisService(DiagnosisRepository diagnosisRepository, DiagnosisMapper diagnosisMapper) {
+    public DiagnosisService(DiagnosisRepository diagnosisRepository, DiagnosisMapper diagnosisMapper, JournalRepository journalRepository) {
         this.diagnosisRepository = diagnosisRepository;
         this.diagnosisMapper = diagnosisMapper;
+        this.journalRepository = journalRepository;
     }
 
     public List<DiagnosisDTO> getAllDiagnosis(){
@@ -36,4 +39,10 @@ public class DiagnosisService {
         return diagnosisMapper.toDto(diagnosis);
     }
 
+    public List<DiagnosisDTO> findByJournalEntry_CareContact_PatientId(Long patientId){
+        return diagnosisRepository.findByJournalEntry_CareContact_PatientId(patientId)
+                .stream()
+                .map(diagnosisMapper::toDto)
+                .toList();
+    }
 }
