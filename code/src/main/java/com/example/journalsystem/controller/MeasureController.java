@@ -34,7 +34,7 @@ public class MeasureController {
 
     }
 
-    @PreAuthorize("hasRole('doctor')")
+    @PreAuthorize("hasRole('doctor')OR hasRole('nurse')")
     @PostMapping()
     public ResponseEntity<MeasureResponse> createMeasure(@Valid @RequestBody CreateMeasureRequest createMeasureRequest){
         return ResponseEntity.status(201).body(measureService.createMeasure(createMeasureRequest));
