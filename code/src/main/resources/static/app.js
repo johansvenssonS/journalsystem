@@ -3,7 +3,8 @@ import {
     getPatientById,
     getAppointmentsByStaffAndDate,
     getCurrentUser,
-    createPatient
+    createPatient,
+    getPatientDashboard
 } from "./api.js";
 
 // Helper Functions (Kept from your original file)
@@ -59,6 +60,22 @@ document.addEventListener('DOMContentLoaded', () => {
     if (createForm) {
         createForm.addEventListener("submit", handleCreatePatient);
     }
+
+    // Patient Dashboard Modal close handlers
+    const pdModal = document.getElementById("patientDashboardModal");
+    const pdClose = document.getElementById("pd-close");
+    if (pdClose) {
+        pdClose.addEventListener("click", closePatientDashboard);
+    }
+    if (pdModal) {
+        // Close when clicking the dark overlay itself, not the modal content
+        pdModal.addEventListener("click", (e) => {
+            if (e.target === pdModal) closePatientDashboard();
+        });
+    }
+    document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") closePatientDashboard();
+    });
 });
 
 function loadDataForPage(pageId) {
@@ -181,13 +198,142 @@ function appendPatientRow(tbody, p) {
         <td>${safe(p.personalNumber)}</td>
         <td>${safe(p.id)}</td>
         <td><span class="badge badge-green">Aktiv</span></td>
-        <td class="text-right"><a href="#" class="action-link">Öppna</a></td>
+        <td class="text-right"><a href="#" class="action-link" data-patient-id="${p.id}">Öppna</a></td>
     `;
+    tr.querySelector(".action-link").addEventListener("click", (e) => {
+        e.preventDefault();
+        openPatientDashboard(p.id);
+    });
     tbody.appendChild(tr);
+}
+
+// ---- 5. Patient Dashboard (US-32 / US-33) ----
+
+function openPatientDashboard(patientId) {
+    const modal = document.getElementById("patientDashboardModal");
+    const loading = document.getElementById("pd-loading");
+    const errorEl = document.getElementById("pd-error");
+    const content = document.getElementById("pd-content");
+
+    // Reset modal to loading state and show it
+    loading.style.display = "block";
+    errorEl.style.display = "none";
+    content.style.display = "none";
+    modal.classList.add("open");
+
+    loadPatientDashboard(patientId);
+}
+
+function closePatientDashboard() {
+    const modal = document.getElementById("patientDashboardModal");
+    modal.classList.remove("open");
+}
+
+async function loadPatientDashboard(patientId) {
+    const loading = document.getElementById("pd-loading");
+    const errorEl = document.getElementById("pd-error");
+    const content = document.getElementById("pd-content");
+
+    try {
+        const dashboard = await getPatientDashboard(patientId);
+
+        // NOTE: field names below (patient.firstName, careContacts, journalEntries,
+        // diagnoses, and each item's sub-fields) are best-guess based on the DTO
+        // getters used server-side. Adjust here if your actual DTO fields differ.
+        const patient = dashboard.patient ?? {};
+        const careContacts = dashboard.careContacts ?? [];
+        const journalEntries = dashboard.journalEntries ?? [];
+        const diagnoses = dashboard.diagnoses ?? [];
+
+        document.getElementById("pd-name").textContent =
+            `${safe(patient.firstName)} ${safe(patient.lastName)}`;
+        document.getElementById("pd-fullname").textContent =
+            `${safe(patient.firstName)} ${safe(patient.lastName)}`;
+        document.getElementById("pd-personalnumber").textContent = safe(patient.personalNumber);
+        document.getElementById("pd-id").textContent = safe(patient.id ?? patientId);
+
+        renderCareContacts(careContacts);
+        renderJournalEntries(journalEntries);
+        renderDiagnoses(diagnoses);
+
+        loading.style.display = "none";
+        content.style.display = "block";
+
+    } catch (err) {
+        loading.style.display = "none";
+        errorEl.style.display = "block";
+        errorEl.textContent = `Kunde inte ladda patientöversikt: ${err.message}`;
+    }
+}
+
+function renderCareContacts(careContacts) {
+    const tbody = document.getElementById("pd-carecontacts-tbody");
+    tbody.innerHTML = "";
+
+    if (!careContacts || careContacts.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="5">Inga vårdkontakter registrerade.</td></tr>`;
+        return;
+    }
+
+    careContacts.forEach(c => {
+        const tr = document.createElement("tr");
+        const date = c.admitDate ? new Date(c.admitDate).toLocaleDateString() : "-";
+        tr.innerHTML = `
+            <td>${date}</td>
+            <td>${safe(c.departmentId)}</td>
+            <td>${safe(c.responsibleId)}</td>
+            <td>${safe(c.reason)}</td>
+            <td><span class="badge badge-gray">${safe(c.status)}</span></td>
+        `;
+        tbody.appendChild(tr);
+    });
+}
+
+function renderJournalEntries(journalEntries) {
+    const tbody = document.getElementById("pd-journal-tbody");
+    tbody.innerHTML = "";
+
+    if (!journalEntries || journalEntries.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="3">Inga journalposter registrerade.</td></tr>`;
+        return;
+    }
+
+    journalEntries.forEach(j => {
+        const tr = document.createElement("tr");
+        const date = j.createdAt ? new Date(j.createdAt).toLocaleDateString() : "-";
+        tr.innerHTML = `
+            <td>${date}</td>
+            <td><span class="badge badge-purple">${safe(j.type)}</span></td>
+            <td>${safe(j.content)}</td>
+        `;
+        tbody.appendChild(tr);
+    });
+}
+
+function renderDiagnoses(diagnoses) {
+    const tbody = document.getElementById("pd-diagnoses-tbody");
+    tbody.innerHTML = "";
+
+    if (!diagnoses || diagnoses.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="4">Inga diagnoser registrerade.</td></tr>`;
+        return;
+    }
+
+    diagnoses.forEach(d => {
+        const tr = document.createElement("tr");
+        const date = d.diagnosedDate ? new Date(d.diagnosedDate).toLocaleDateString() : "-";
+        tr.innerHTML = `
+            <td>${date}</td>
+            <td>${safe(d.icd10Code)}</td>
+            <td>${safe(d.name)}</td>
+            <td>${safe(d.description)}</td>
+        `;
+        tbody.appendChild(tr);
+    });
 }
 // only for Dr. make it dynamic by adding role info to the whoAmI function
 async function renderCurrentUser(){
- const username = document.getElementById("current-user-name");
+    const username = document.getElementById("current-user-name");
 
 // 1. Get raw string from backend ("magnus.karlsson.")
     const rawUser = await getCurrentUser();
