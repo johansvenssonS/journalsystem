@@ -1,6 +1,7 @@
 package com.example.journalsystem.exceptions;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -47,5 +48,16 @@ public class GlobalExceptionHandler {
 
         ErrorResponse body = new ErrorResponse(400, combinedMessage, LocalDateTime.now(), errors);
         return ResponseEntity.status(400).body(body);
+    }
+
+    /// 403 - Användaren är inloggad men saknar behörighet för handlingen.
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ErrorResponse> handleAccessDenied(AccessDeniedException ex){
+        ErrorResponse body = new ErrorResponse(
+                403,
+                ex.getMessage(),
+                LocalDateTime.now()
+        );
+        return ResponseEntity.status(403).body(body);
     }
 }

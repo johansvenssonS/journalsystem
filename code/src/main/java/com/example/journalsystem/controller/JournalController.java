@@ -38,7 +38,9 @@ public class JournalController {
     }
 
     /// US-13 — läkare skapar journalpost av typen note, examination eller operation.
-    @PreAuthorize("hasAuthority('doctor')")
+    /// US-22 — sjuksköterska får skapa journalpost, men typregeln kontrolleras
+    /// i servicen som bara tillåter note för den rollen.
+    @PreAuthorize("hasAnyAuthority('doctor','nurse')")
     @PostMapping("/journalentry")
     public ResponseEntity<JournalEntryDTO> createJournalEntry(
             @Valid @RequestBody CreateJournalEntryRequest request) {
