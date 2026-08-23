@@ -31,6 +31,13 @@ public class PrescriptionController {
         return ResponseEntity.ok(prescriptionService.getPrescriptionById(id));
     }
 
+    @PreAuthorize("hasRole('pharmacy')")
+    @GetMapping("/personal-number/{pNumber}")
+    public ResponseEntity<List<PrescriptionDTO>> getPrescriptionByPersonalNumber(@PathVariable String pNumber){
+        return ResponseEntity.ok(prescriptionService.getPrescriptionByPersonalNumber(pNumber));
+    }
+
+
     @PreAuthorize("hasRole('doctor')")
     @PostMapping
     public ResponseEntity<PrescriptionResponse> createPrescription(@Valid @RequestBody CreatePrescriptionRequest createPrescriptionRequest){

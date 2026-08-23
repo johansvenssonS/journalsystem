@@ -45,6 +45,14 @@ public class PrescriptionService {
                 .orElseThrow(() -> new ResourceNotFoundException("Recept med id: " + id + " hittades inte"));
         return prescriptionMapper.toDto(prescription);
     }
+    public List<PrescriptionDTO> getPrescriptionByPersonalNumber(String personalNumber) {
+        if (!patientRepository.existsByPersonalNumber(personalNumber)){
+            throw new ResourceNotFoundException("Person med personnummer:" + personalNumber + " hittades inte");
+        }
+        return prescriptionRepository.findByPatient_PersonalNumber(personalNumber).stream()
+                .map(prescriptionMapper::toDto)
+                .toList();
+    }
 
     public PrescriptionResponse createPrescription(CreatePrescriptionRequest createPrescriptionRequest) {
         Long patientId = createPrescriptionRequest.getPatientId();
