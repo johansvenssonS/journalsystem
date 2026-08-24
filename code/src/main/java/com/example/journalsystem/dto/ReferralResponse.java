@@ -1,0 +1,59 @@
+package com.example.journalsystem.dto;
+
+import java.time.Instant;
+
+public class ReferralResponse {
+
+    private Long id;
+    private Long patientId;
+    private Long fromDepartmentId;
+    private Long toDepartmentId;
+    private Long sentBy;
+    private String reason;
+    private Instant sentAt;
+    private String status;
+
+    public ReferralResponse(Long id, Long patientId, Long fromDepartmentId, Long toDepartmentId,
+                             Long sentBy, String reason, Instant sentAt, String status) {
+        this.id = id;
+        this.patientId = patientId;
+        this.fromDepartmentId = fromDepartmentId;
+        this.toDepartmentId = toDepartmentId;
+        this.sentBy = sentBy;
+        this.reason = reason;
+        this.sentAt = sentAt;
+        this.status = status;
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public Long getPatientId() {
+        return patientId;
+    }
+
+    public Long getFromDepartmentId() {
+        return fromDepartmentId;
+    }
+
+    public Long getToDepartmentId() {
+        return toDepartmentId;
+    }
+
+    public Long getSentBy() {
+        return sentBy;
+    }
+
+    public String getReason() {
+        return reason;
+    }
+
+    public Instant getSentAt() {
+        return sentAt;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+}

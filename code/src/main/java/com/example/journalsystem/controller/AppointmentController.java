@@ -1,8 +1,12 @@
 package com.example.journalsystem.controller;
 
 import com.example.journalsystem.dto.AppointmentDto;
+import com.example.journalsystem.dto.AppointmentResponse;
+import com.example.journalsystem.dto.CreateAppointmentRequest;
 import com.example.journalsystem.service.AppointmentService;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -33,6 +37,13 @@ public class AppointmentController {
             @RequestParam String date // format: YYYY-MM-DD
     ) {
         return ResponseEntity.ok(appointmentService.getByStaffIdAndDate(staffId, date));
+    }
+
+
+    @PreAuthorize("hasRole('RECEPTIONIST')")
+    @PostMapping
+    public ResponseEntity<AppointmentResponse> createAppointment(@Valid @RequestBody CreateAppointmentRequest createAppointmentRequest){
+        return ResponseEntity.status(201).body(appointmentService.createAppointment(createAppointmentRequest));
     }
 }
 
