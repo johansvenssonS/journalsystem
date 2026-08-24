@@ -57,6 +57,12 @@ export async function createPatient(patientData) {
     return postJSON(`/patients`, patientData);
 }
 
+// ---- Patient dashboard (US-32 / US-33) ----
+export async function getPatientDashboard(patientId) {
+    const res = await fetch(`/patients/${patientId}/dashboard`);
+    return handleResponse(res);
+}
+
 // ---- Patient contacts ----
 export async function getPatientContactById(id) {
     const res = await fetch(`/patient-contacts/${id}`);
@@ -95,11 +101,3 @@ export async function getCurrentUser(){
     const res = await fetch('auth/me');
     return handleResponse(res);
 }
-
-
-
-
-
-
-
-

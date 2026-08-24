@@ -21,8 +21,10 @@ public class AuthController {
 
     @PostMapping("/register")
     public ResponseEntity<UserAccountResponseDTO> register(@RequestBody UserAccountRequestDTO userAccountRequestDTO) {
+
         return ResponseEntity.status(201).body(userAccountService.createUserAccount(userAccountRequestDTO));
     }
+
     @GetMapping("/me")
     public ResponseEntity<String> whoAmI() {
         String username = SecurityContextHolder.getContext()

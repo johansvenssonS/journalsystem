@@ -391,6 +391,62 @@
   </section>
 </main>
 
+<!-- Patientöversikt Modal -->
+<div id="patientDashboardModal" class="modal-overlay">
+  <div class="modal">
+    <div class="modal-header">
+      <div>
+        <h2 id="pd-name">Patientöversikt</h2>
+        <span class="api-badge">GET /api/patients/{id}/dashboard</span>
+      </div>
+      <button id="pd-close" class="modal-close" aria-label="Stäng">&times;</button>
+    </div>
+
+    <div class="modal-body" id="pd-body">
+      <div class="pd-loading" id="pd-loading">Laddar patientöversikt...</div>
+      <div class="pd-error" id="pd-error" style="display:none;"></div>
+
+      <div id="pd-content" style="display:none;">
+        <div class="pd-info-grid">
+          <div class="pd-info-item"><span class="pd-label">Namn</span><span id="pd-fullname">-</span></div>
+          <div class="pd-info-item"><span class="pd-label">Personnummer</span><span id="pd-personalnumber">-</span></div>
+          <div class="pd-info-item"><span class="pd-label">Patient-ID</span><span id="pd-id">-</span></div>
+        </div>
+
+        <div class="pd-section">
+          <h3>Vårdkontakter</h3>
+          <table>
+            <thead>
+            <tr><th>DATUM</th><th>AVDELNING-ID</th><th>ANSVARIG-ID</th><th>ORSAK</th><th>STATUS</th></tr>
+            </thead>
+            <tbody id="pd-carecontacts-tbody"></tbody>
+          </table>
+        </div>
+
+        <div class="pd-section">
+          <h3>Journalposter</h3>
+          <table>
+            <thead>
+            <tr><th>DATUM</th><th>TYP</th><th>INNEHÅLL</th></tr>
+            </thead>
+            <tbody id="pd-journal-tbody"></tbody>
+          </table>
+        </div>
+
+        <div class="pd-section">
+          <h3>Diagnoser</h3>
+          <table>
+            <thead>
+            <tr><th>DATUM</th><th>ICD-10</th><th>NAMN</th><th>BESKRIVNING</th></tr>
+            </thead>
+            <tbody id="pd-diagnoses-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- Important: type="module" allows the import logic -->
 <script type="module" src="app.js"></script>
 </body>

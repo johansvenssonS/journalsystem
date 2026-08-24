@@ -37,6 +37,7 @@ public class PatientController {
         return ResponseEntity.status(201).body(patientService.createPatient(createPatientRequest));
     }
 
+    @PreAuthorize("hasRole('doctor')")
     @GetMapping("/personal-number/{personalNumber}")
     public ResponseEntity<PatientResponse> getByPersonalNumber(@PathVariable String personalNumber) {
         return ResponseEntity.ok(patientService.getPatientByPersonalNumber(personalNumber));
