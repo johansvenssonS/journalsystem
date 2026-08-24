@@ -1,0 +1,103 @@
+### US-12 — Skapa vårdkontakt
+### Kör requesten nedan i ordning med gröna play-pilen till vänster.
+### IntelliJ sparar sessionscookien automatiskt mellan anropen.
+
+@host = http://localhost:8080
+@user = adli.test
+@pass = ANGE_DITT_LOSENORD_HAR
+
+### 1. Registrera ett läkarkonto (öppen endpoint, kräver ingen inloggning)
+POST {{host}}/auth/register
+Content-Type: application/json
+
+{
+  "username": "{{user}}",
+  "password": "{{pass}}",
+  "email": "adli.test@ward.se",
+  "firstName": "Adli",
+  "lastName": "Testlakare",
+  "personalNumber": "199001011234",
+  "roleTitle": "doctor",
+  "departmentId": 1
+}
+
+> {%
+    client.test("201 Created", function() {
+        client.assert(response.status === 201, "Fick " + response.status);
+    });
+%}
+
+### 2. Logga in (form-data, inte JSON)
+POST {{host}}/login
+Content-Type: application/x-www-form-urlencoded
+
+username={{user}}&password={{pass}}
+
+### 3. Vem är jag? Ska svara med användarnamnet.
+GET {{host}}/auth/me
+
+> {%
+    client.test("Inloggad", function() {
+        client.assert(response.status === 200, "Inte inloggad, fick " + response.status);
+    });
+%}
+
+### 4. HUVUDTESTET — skapa vårdkontakt. Ska ge 201.
+POST {{host}}/v%C3%A5rdkontakter
+Content-Type: application/json
+
+{
+  "patientId": 1,
+  "departmentId": 1,
+  "responsibleStaffId": 1,
+  "reason": "Brostsmarta"
+}
+
+> {%
+    client.test("201 Created", function() {
+        client.assert(response.status === 201, "Fick " + response.status);
+    });
+    client.test("Fick ett id tillbaka", function() {
+        client.assert(response.body.id !== undefined, "Inget id i svaret");
+    });
+    client.test("Status ar admitted", function() {
+        client.assert(response.body.status === "admitted", "Status: " + response.body.status);
+    });
+    client.global.set("careContactId", response.body.id);
+%}
+
+### 5. Hamta den nyss skapade vardkontakten. Ska ge 200.
+GET {{host}}/v%C3%A5rdkontakter/{{careContactId}}
+
+### 6. FELFALL — patient som inte finns. Ska ge 404.
+POST {{host}}/v%C3%A5rdkontakter
+Content-Type: application/json
+
+{
+  "patientId": 99999,
+  "departmentId": 1,
+  "responsibleStaffId": 1,
+  "reason": "Finns inte"
+}
+
+> {%
+    client.test("404 Not Found", function() {
+        client.assert(response.status === 404, "Fick " + response.status);
+    });
+%}
+
+### 7. FELFALL — patientId saknas helt. Ska ge 400 fran @Valid.
+POST {{host}}/v%C3%A5rdkontakter
+Content-Type: application/json
+
+{
+  "departmentId": 1,
+  "responsibleStaffId": 1,
+  "reason": "Saknar patientId"
+}
+
+> {%
+    client.test("400 Bad Request", function() {
+        client.assert(response.status === 400, "Fick " + response.status);
+    });
+%}
