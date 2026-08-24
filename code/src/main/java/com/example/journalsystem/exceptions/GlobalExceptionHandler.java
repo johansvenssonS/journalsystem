@@ -49,14 +49,15 @@ public class GlobalExceptionHandler {
         ErrorResponse body = new ErrorResponse(400, combinedMessage, LocalDateTime.now(), errors);
         return ResponseEntity.status(400).body(body);
     }
+
+    /// 403 - Användaren är inloggad men saknar behörighet för handlingen.
     @ExceptionHandler(AccessDeniedException.class)
-    public ResponseEntity<ErrorResponse> handleAccessDenied(AccessDeniedException ex) {
+    public ResponseEntity<ErrorResponse> handleAccessDenied(AccessDeniedException ex){
         ErrorResponse body = new ErrorResponse(
                 403,
-                "Du har inte rätt roll/behörighet för att göra detta!",
+                ex.getMessage(),
                 LocalDateTime.now()
         );
         return ResponseEntity.status(403).body(body);
     }
-
 }
