@@ -28,8 +28,8 @@ public class JournalEntryService {
     public static final String TYPE_EXAMINATION = "examination";
     public static final String TYPE_OPERATION = "operation";
 
-    public static final String ROLE_DOCTOR = "doctor";
-    public static final String ROLE_NURSE = "nurse";
+    public static final String ROLE_DOCTOR = "ROLE_doctor";
+    public static final String ROLE_NURSE = "ROLE_nurse";
 
     public final JournalRepository journalRepository;
     public final JournalEntryMapper journalEntryMapper;
