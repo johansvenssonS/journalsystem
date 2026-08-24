@@ -1,15 +1,10 @@
 import { getAuditLogs } from "../api.js";
-import { safe, formatDateTime, loadingRow, emptyRow, errorRow } from "../ui.js";
+import { safe, formatDateTime, loadingRow, emptyRow, errorRow, setTopbar } from "../ui.js";
 
 export async function render(container) {
-    container.innerHTML = `
-        <header class="page-header">
-            <div>
-                <h2>Granskningslogg</h2>
-                <p>Spårbarhet över åtkomst och händelser i journalsystemet</p>
-            </div>
-        </header>
+    setTopbar("Granskningslogg", "Spårbarhet över åtkomst och händelser i journalsystemet");
 
+    container.innerHTML = `
         <div class="card">
             <div class="card-header">
                 <h3>Loggade händelser</h3>

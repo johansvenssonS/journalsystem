@@ -1,6 +1,6 @@
 import { getReferrals, createReferral, getPatients, getDepartments, getCurrentUser } from "../api.js";
 import { loadCurrentUser } from "../auth.js";
-import { safe, formatDateTime, statusBadge, loadingRow, emptyRow, errorRow, toastSuccess, toMap } from "../ui.js";
+import { safe, formatDateTime, statusBadge, loadingRow, emptyRow, errorRow, toastSuccess, toMap, setTopbar } from "../ui.js";
 import { can } from "../access.js";
 
 let departmentMap = {};
@@ -10,15 +10,9 @@ export async function render(container) {
     const me = await loadCurrentUser(getCurrentUser);
     const canCreate = can.createReferral(me);
     myDepartmentId = me.departmentId ?? null;
+    setTopbar("Remisser", "Skicka och följ upp remisser mellan avdelningar");
 
     container.innerHTML = `
-        <header class="page-header">
-            <div>
-                <h2>Remisser</h2>
-                <p>Skicka och följ upp remisser mellan avdelningar</p>
-            </div>
-        </header>
-
         ${canCreate ? `
         <div class="card mb-4">
             <div class="card-header">

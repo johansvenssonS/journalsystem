@@ -1,18 +1,12 @@
 import { getStaff, getStaffEmployments, getDepartments, getCurrentUser } from "../api.js";
 import { loadCurrentUser } from "../auth.js";
-import { safe, escapeHtml, loadingRow, emptyRow, errorRow, toMap } from "../ui.js";
+import { safe, escapeHtml, loadingRow, emptyRow, errorRow, toMap, setTopbar } from "../ui.js";
 
 export async function render(container) {
     const me = await loadCurrentUser(getCurrentUser);
+    setTopbar("Personal & avdelningar", `Katalog över sjukhusets personal och avdelningar${me.departmentName ? ` — du tillhör ${me.departmentName}` : ""}`);
 
     container.innerHTML = `
-        <header class="page-header">
-            <div>
-                <h2>Personal &amp; avdelningar</h2>
-                <p>Katalog över sjukhusets personal och avdelningar${me.departmentName ? ` — du tillhör ${me.departmentName}` : ""}</p>
-            </div>
-        </header>
-
         <div class="grid-2">
             <div class="card">
                 <div class="card-header">

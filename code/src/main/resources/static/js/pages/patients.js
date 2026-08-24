@@ -6,12 +6,21 @@ import {
 import { loadCurrentUser } from "../auth.js";
 import {
     safe, escapeHtml, formatDate, formatDateTime, toDateInputValue,
-    loadingRow, emptyRow, errorRow, toastError, toastSuccess,
+    loadingRow, emptyRow, errorRow, toastError, toastSuccess, setTopbar,
 } from "../ui.js";
 import { can } from "../access.js";
+import { OPEN_PATIENT_KEY } from "../app.js";
 
 export async function render(container) {
     const me = await loadCurrentUser(getCurrentUser);
+
+    const pendingId = sessionStorage.getItem(OPEN_PATIENT_KEY);
+    if (pendingId) {
+        sessionStorage.removeItem(OPEN_PATIENT_KEY);
+        await renderDetail(container, me, pendingId);
+        return;
+    }
+
     await renderList(container, me);
 }
 
@@ -19,15 +28,9 @@ export async function render(container) {
 
 async function renderList(container, me) {
     const canCreate = can.createPatient(me);
+    setTopbar("Patienter", "Sök, visa och registrera patienter");
 
     container.innerHTML = `
-        <header class="page-header">
-            <div>
-                <h2>Patienter</h2>
-                <p>Sök, visa och registrera patienter</p>
-            </div>
-        </header>
-
         ${canCreate ? `
         <div class="card mb-4">
             <div class="card-header">
@@ -200,14 +203,10 @@ async function renderDetail(container, me, patientId) {
         { id: "journal", label: "Journal & diagnoser", show: showJournal },
     ].filter((t) => t.show);
 
+    setTopbar(`${safe(details.firstName)} ${safe(details.lastName)}`, `#${safe(details.id)} · ${safe(details.personalNumber)}${details.deletedAt ? " · Inaktiv" : ""}`);
+
     container.innerHTML = `
         <button type="button" class="back-link" id="backToList">← Tillbaka till patienter</button>
-        <div class="detail-header">
-            <div class="patient-heading">
-                <h2>${safe(details.firstName)} ${safe(details.lastName)}</h2>
-                <p>#${safe(details.id)} · ${safe(details.personalNumber)} ${details.deletedAt ? "· Inaktiv" : ""}</p>
-            </div>
-        </div>
 
         <div class="tabs">
             ${tabs.map((t, i) => `<button class="tab-btn ${i === 0 ? "active" : ""}" data-tab="${t.id}">${t.label}</button>`).join("")}

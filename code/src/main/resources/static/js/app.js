@@ -1,5 +1,5 @@
 import { requireAuth, logout, loadCurrentUser } from "./auth.js";
-import { getCurrentUser } from "./api.js";
+import { getCurrentUser, getReferrals, getPatientById, getPatientByPersonalNumber } from "./api.js";
 import { roleLabel, toastError } from "./ui.js";
 import { navForRole, canAccessPage, firstAllowedPage } from "./access.js";
 
@@ -7,6 +7,8 @@ requireAuth();
 
 const content = document.getElementById("content");
 const menu = document.getElementById("menu");
+const searchForm = document.getElementById("topbarSearchForm");
+const searchInput = document.getElementById("topbarSearchInput");
 
 const PAGES = {
     dashboard: () => import("./pages/dashboard.js"),
@@ -19,12 +21,21 @@ const PAGES = {
     "api-docs": () => import("./pages/apiDocs.js"),
 };
 
+// sessionStorage key patients.js checks on mount to auto-open a patient found via
+// the top-bar search — keeps app.js and patients.js decoupled (no shared state file).
+export const OPEN_PATIENT_KEY = "mj_open_patient_query";
+
 let activePage = null;
 let currentUser = null;
 
-function renderMenu(me) {
+function renderMenu(me, badges = {}) {
     menu.innerHTML = navForRole(me)
-        .map((item) => `<a href="#" class="menu-item" data-target="${item.id}"><span class="icon">${item.icon}</span> ${item.label}</a>`)
+        .map((item) => `
+            <a href="#" class="menu-item" data-target="${item.id}">
+                <span class="icon">${item.icon}</span>
+                <span>${item.label}</span>
+                ${badges[item.id] ? `<span class="menu-item-badge">${badges[item.id]}</span>` : ""}
+            </a>`)
         .join("");
 
     menu.querySelectorAll(".menu-item").forEach((item) => {
@@ -74,6 +85,42 @@ function renderCurrentUserBadge(me) {
         .join("") || "?";
 }
 
+async function loadNavBadges(me) {
+    const badges = {};
+    if (canAccessPage(me, "referrals")) {
+        try {
+            const rows = await getReferrals();
+            const open = rows.filter((r) => !["ACCEPTED", "ACCEPTERAD"].includes((r.status || "").toUpperCase()));
+            if (open.length) badges.referrals = open.length;
+        } catch {
+            // nav badge is a nice-to-have — a failed count just means no badge shown
+        }
+    }
+    return badges;
+}
+
+function setupTopbarSearch(me) {
+    if (!canAccessPage(me, "patients")) return;
+    searchForm.hidden = false;
+
+    searchForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const query = searchInput.value.trim();
+        if (!query) return;
+
+        try {
+            const looksLikeId = /^\d{1,7}$/.test(query);
+            const patient = looksLikeId ? await getPatientById(query) : await getPatientByPersonalNumber(query);
+            sessionStorage.setItem(OPEN_PATIENT_KEY, String(patient.id));
+            searchInput.value = "";
+            setActiveMenuItem("patients");
+            mountPage("patients");
+        } catch {
+            toastError(new Error(`Ingen patient hittades för ”${query}”.`));
+        }
+    });
+}
+
 async function bootstrap() {
     try {
         currentUser = await loadCurrentUser(getCurrentUser);
@@ -84,7 +131,10 @@ async function bootstrap() {
         currentUser = { role: null };
     }
 
-    renderMenu(currentUser);
+    const badges = await loadNavBadges(currentUser);
+    renderMenu(currentUser, badges);
+    setupTopbarSearch(currentUser);
+
     const startPage = firstAllowedPage(currentUser) || "dashboard";
     setActiveMenuItem(startPage);
     mountPage(startPage);

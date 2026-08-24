@@ -1,24 +1,38 @@
 import { getScheduleFor, getPatients, getPrescriptions, getReferrals, getAuditLogs, getAppointments, getCurrentUser } from "../api.js";
 import { loadCurrentUser } from "../auth.js";
-import { safe, formatDateTime, roleLabel, toDateInputValue, statusBadge, loadingRow, emptyRow, errorRow } from "../ui.js";
+import { safe, formatDateTime, roleLabel, toDateInputValue, statusBadgeClass, loadingRow, emptyRow, errorRow, setTopbar } from "../ui.js";
+import { can, canAccessPage } from "../access.js";
+
+function goToPage(pageId) {
+    document.querySelector(`.menu-item[data-target="${pageId}"]`)?.click();
+}
+
+function quickActionsFor(me) {
+    const candidates = [
+        can.createAppointment(me) && { label: "Ny bokning", page: "appointments" },
+        can.createPrescription(me) && { label: "Skriv recept", page: "prescriptions" },
+        can.createReferral(me) && { label: "Skapa remiss", page: "referrals" },
+        can.createPatient(me) && { label: "Registrera patient", page: "patients" },
+        can.lookupPrescription(me) && { label: "Slå upp recept", page: "prescriptions" },
+        canAccessPage(me, "patients") && { label: "Öppna patienter", page: "patients" },
+        canAccessPage(me, "appointments") && !can.createAppointment(me) && { label: "Öppna bokningar", page: "appointments" },
+    ].filter(Boolean);
+    return candidates.slice(0, 3);
+}
 
 export async function render(container) {
     const me = await loadCurrentUser(getCurrentUser);
+    setTopbar("Startsida", `Välkommen tillbaka, ${safe(me.firstName)} ${safe(me.lastName)} — ${roleLabel(me.role)}${me.departmentName ? " · " + me.departmentName : ""}`);
+
+    const actions = quickActionsFor(me);
 
     container.innerHTML = `
-        <header class="page-header">
-            <div>
-                <h2>Startsida</h2>
-                <p>Välkommen tillbaka, ${safe(me.firstName)} ${safe(me.lastName)} — ${roleLabel(me.role)}${me.departmentName ? " · " + me.departmentName : ""}</p>
-            </div>
-        </header>
-
         <div class="stats-grid">
-            <div class="stat-card"><h3 id="stat-patients">-</h3><p>Patienter i systemet</p></div>
-            <div class="stat-card"><h3 id="stat-appointments">-</h3><p>Bokningar idag</p></div>
-            <div class="stat-card"><h3 id="stat-prescriptions">-</h3><p>Aktiva recept</p></div>
-            <div class="stat-card"><h3 id="stat-referrals">-</h3><p>Öppna remisser</p></div>
-            ${me.departmentId ? `<div class="stat-card stat-card-accent"><h3 id="stat-dept-today">-</h3><p>Bokningar idag · ${safe(me.departmentName)}</p></div>` : ""}
+            <div class="stat-card"><div class="stat-label">Patienter i systemet</div><div class="stat-value-row"><h3 id="stat-patients">-</h3></div></div>
+            <div class="stat-card"><div class="stat-label">Bokningar idag</div><div class="stat-value-row"><h3 id="stat-appointments">-</h3></div></div>
+            <div class="stat-card"><div class="stat-label">Aktiva recept</div><div class="stat-value-row"><h3 id="stat-prescriptions">-</h3></div></div>
+            <div class="stat-card"><div class="stat-label">Öppna remisser</div><div class="stat-value-row"><h3 id="stat-referrals">-</h3></div></div>
+            ${me.departmentId ? `<div class="stat-card stat-card-accent"><div class="stat-label">Bokningar idag · ${safe(me.departmentName)}</div><div class="stat-value-row"><h3 id="stat-dept-today">-</h3></div></div>` : ""}
         </div>
 
         <div class="grid-2">
@@ -27,40 +41,44 @@ export async function render(container) {
                     <h3>${me.staffId ? "Din schemalagda dag" : "Dagens bokningar"}</h3>
                     <span class="api-badge">GET /appointments/schedule</span>
                 </div>
-                <div class="table-wrap">
-                    <table>
-                        <thead><tr><th>Tid</th><th>Patient-ID</th><th>Status</th><th>Notering</th></tr></thead>
-                        <tbody id="dashboard-schedule-body">${loadingRow(4)}</tbody>
-                    </table>
-                </div>
+                <div class="row-list" id="dashboard-schedule-body">${loadingRow(1)}</div>
             </div>
 
-            <div class="card">
-                <div class="card-header">
-                    <h3>Senaste aktivitet</h3>
-                    <span class="api-badge">GET /audit-logs</span>
+            <div style="display:grid; gap:14px; align-content:start;">
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Senaste aktivitet</h3>
+                        <span class="api-badge">GET /audit-logs</span>
+                    </div>
+                    <div class="row-list" id="dashboard-audit-body">${loadingRow(1)}</div>
                 </div>
-                <div class="table-wrap">
-                    <table>
-                        <thead><tr><th>Tid</th><th>Händelse</th><th>Personal</th></tr></thead>
-                        <tbody id="dashboard-audit-body">${loadingRow(3)}</tbody>
-                    </table>
-                </div>
+
+                ${actions.length ? `
+                <div class="card">
+                    <div class="card-header"><h3>Snabbåtgärder</h3></div>
+                    <div class="quick-actions">
+                        ${actions.map((a, i) => `<a href="#" class="quick-action ${i === 0 ? "quick-action-primary" : ""}" data-page="${a.page}">${a.label}</a>`).join("")}
+                    </div>
+                </div>` : ""}
             </div>
         </div>
     `;
 
-    loadStats(me);
+    container.querySelectorAll(".quick-action").forEach((el) => {
+        el.addEventListener("click", (e) => { e.preventDefault(); goToPage(el.dataset.page); });
+    });
+
+    loadStats();
     loadSchedule(me);
     loadActivity();
 }
 
-async function loadStats(me) {
+async function loadStats() {
     getPatients()
         .then((rows) => (document.getElementById("stat-patients").textContent = rows.length))
         .catch(() => (document.getElementById("stat-patients").textContent = "-"));
 
-    loadTodayAppointmentCounts(me);
+    loadTodayAppointmentCounts();
 
     getPrescriptions()
         .then((rows) => (document.getElementById("stat-prescriptions").textContent = rows.filter((p) => p.active).length))
@@ -74,18 +92,17 @@ async function loadStats(me) {
         .catch(() => (document.getElementById("stat-referrals").textContent = "-"));
 }
 
-async function loadTodayAppointmentCounts(me) {
+async function loadTodayAppointmentCounts() {
     // No dedicated "count today" endpoint — approximate via /appointments and filter client-side.
     try {
+        const me = await loadCurrentUser(getCurrentUser);
         const rows = await getAppointments();
         const today = toDateInputValue();
         const todayRows = rows.filter((a) => a.scheduledAt && a.scheduledAt.startsWith(today));
         document.getElementById("stat-appointments").textContent = todayRows.length;
 
         const deptStat = document.getElementById("stat-dept-today");
-        if (deptStat) {
-            deptStat.textContent = todayRows.filter((a) => a.departmentId === me.departmentId).length;
-        }
+        if (deptStat) deptStat.textContent = todayRows.filter((a) => a.departmentId === me.departmentId).length;
     } catch {
         document.getElementById("stat-appointments").textContent = "-";
         const deptStat = document.getElementById("stat-dept-today");
@@ -94,51 +111,59 @@ async function loadTodayAppointmentCounts(me) {
 }
 
 async function loadSchedule(me) {
-    const tbody = document.getElementById("dashboard-schedule-body");
+    const el = document.getElementById("dashboard-schedule-body");
     if (!me.staffId) {
-        tbody.innerHTML = '<tr class="state-row"><td colspan="4">Ditt konto är inte kopplat till en personalprofil.</td></tr>';
+        el.innerHTML = '<p class="text-muted" style="padding:8px 4px;">Ditt konto är inte kopplat till en personalprofil.</p>';
         return;
     }
     try {
         const rows = await getScheduleFor(me.staffId, toDateInputValue());
         if (!rows || rows.length === 0) {
-            tbody.innerHTML = emptyRow(4, "Inga bokningar för idag.");
+            el.innerHTML = '<p class="text-muted" style="padding:8px 4px;">Inga bokningar för idag.</p>';
             return;
         }
-        tbody.innerHTML = rows
-            .map((a) => `
-                <tr>
-                    <td><strong>${a.scheduledAt ? new Date(a.scheduledAt).toLocaleTimeString("sv-SE", { hour: "2-digit", minute: "2-digit" }) : "-"}</strong></td>
-                    <td>#${safe(a.patientId)}</td>
-                    <td>${statusBadge(a.status)}</td>
-                    <td>${safe(a.note)}</td>
-                </tr>`)
-            .join("");
+        el.innerHTML = rows.map((a) => scheduleRow(a)).join("");
     } catch (err) {
-        tbody.innerHTML = errorRow(4, err);
+        el.innerHTML = `<p class="text-muted" style="padding:8px 4px;">Kunde inte hämta schemat: ${err.message}</p>`;
     }
 }
 
+function scheduleRow(a) {
+    const accent = statusBadgeClass(a.status).replace("badge-", "");
+    const time = a.scheduledAt ? new Date(a.scheduledAt).toLocaleTimeString("sv-SE", { hour: "2-digit", minute: "2-digit" }) : "-";
+    return `
+        <div class="row-list-item">
+            <div class="row-list-time mono">${time}</div>
+            <div class="row-list-accent row-list-accent-${accent}"></div>
+            <div class="row-list-body">
+                <div class="row-list-title">Patient #${safe(a.patientId)}</div>
+                <div class="row-list-meta">${safe(a.note)}</div>
+            </div>
+            <span class="badge ${statusBadgeClass(a.status)}">${safe(a.status)}</span>
+        </div>`;
+}
+
 async function loadActivity() {
-    const tbody = document.getElementById("dashboard-audit-body");
+    const el = document.getElementById("dashboard-audit-body");
     try {
         const rows = await getAuditLogs();
         if (!rows || rows.length === 0) {
-            tbody.innerHTML = emptyRow(3, "Ingen aktivitet loggad ännu.");
+            el.innerHTML = '<p class="text-muted" style="padding:8px 4px;">Ingen aktivitet loggad ännu.</p>';
             return;
         }
         const latest = [...rows]
             .sort((a, b) => new Date(b.occurredAt) - new Date(a.occurredAt))
-            .slice(0, 8);
-        tbody.innerHTML = latest
-            .map((log) => `
-                <tr>
-                    <td>${formatDateTime(log.occurredAt)}</td>
-                    <td>${safe(log.event)}</td>
-                    <td>${log.staffId ? "Personal #" + log.staffId : "-"}</td>
-                </tr>`)
-            .join("");
+            .slice(0, 6);
+        el.innerHTML = latest.map((log) => `
+            <div class="row-list-item">
+                <div class="row-list-time mono">${formatDateTime(log.occurredAt).split(" ")[1] || ""}</div>
+                <div class="row-list-accent row-list-accent-purple"></div>
+                <div class="row-list-body">
+                    <div class="row-list-title">${safe(log.event)}</div>
+                    <div class="row-list-meta">${log.staffId ? "Personal #" + log.staffId : "-"}</div>
+                </div>
+            </div>`).join("");
     } catch (err) {
-        tbody.innerHTML = errorRow(3, err);
+        el.innerHTML = `<p class="text-muted" style="padding:8px 4px;">Kunde inte hämta aktivitet: ${err.message}</p>`;
     }
 }

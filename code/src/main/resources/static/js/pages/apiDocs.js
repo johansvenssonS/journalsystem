@@ -1,6 +1,8 @@
 // Static endpoint registry — hand-authored from the controller source, since these routes are
 // stable and there is no live introspection endpoint to build this from.
 
+import { setTopbar } from "../ui.js";
+
 const GROUPS = [
     {
         name: "Autentisering",
@@ -96,14 +98,9 @@ const GROUPS = [
 ];
 
 export async function render(container) {
-    container.innerHTML = `
-        <header class="page-header">
-            <div>
-                <h2>API-dokumentation</h2>
-                <p>Snabbreferens över journalsystemets backend-endpoints</p>
-            </div>
-        </header>
+    setTopbar("API-dokumentation", "Snabbreferens över journalsystemets backend-endpoints");
 
+    container.innerHTML = `
         <div class="card mb-4">
             <input type="text" id="apiDocsSearch" class="form-control" placeholder="Sök på path eller beskrivning...">
         </div>

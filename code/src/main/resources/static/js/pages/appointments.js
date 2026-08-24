@@ -1,8 +1,8 @@
 import { getAppointments, getScheduleFor, createAppointment, getPatients, getStaff, getDepartments, getCurrentUser } from "../api.js";
 import { loadCurrentUser } from "../auth.js";
-import { safe, formatDateTime, toDateInputValue, toDateTimeLocalValue, statusBadge, loadingRow, emptyRow, errorRow, toastSuccess, toMap } from "../ui.js";
+import { safe, formatDateTime, toDateInputValue, toDateTimeLocalValue, statusBadgeClass, loadingRow, errorRow, toastSuccess, toMap, setTopbar } from "../ui.js";
 import { can } from "../access.js";
-import { renderWeekCalendar, startOfWeek, addDays, weekRangeLabel } from "../components/calendar.js";
+import { renderWeekCalendar, renderListView, startOfWeek, addDays, weekRangeLabel } from "../components/calendar.js";
 
 let staffList = [];
 let staffMap = {};
@@ -13,22 +13,16 @@ let me = null;
 let viewMode = "week"; // "week" | "list"
 let deptScope = "mine"; // "mine" | "all"
 let weekStart = startOfWeek(new Date());
-let scheduleSearchRows = null; // set when the staff-schedule search is active; overrides the list view
+let scheduleSearchRows = null; // set when the staff-schedule search is active; overrides the normal view
 let scheduleSearchLabel = "";
 
 export async function render(container) {
     me = await loadCurrentUser(getCurrentUser);
+    setTopbar("Bokningar", "Boka och sök i schemalagda besök");
     const canCreate = can.createAppointment(me);
     deptScope = me.departmentId != null && !can.viewAllAppointments(me) ? "mine" : "all";
 
     container.innerHTML = `
-        <header class="page-header">
-            <div>
-                <h2>Bokningar</h2>
-                <p>Boka och sök i schemalagda besök</p>
-            </div>
-        </header>
-
         ${canCreate ? `
         <div class="card mb-4">
             <div class="card-header">
@@ -96,10 +90,10 @@ export async function render(container) {
                 </div>
             </div>
             <div id="weekNav" class="week-nav" ${viewMode === "list" ? "hidden" : ""}>
-                <button type="button" class="btn btn-secondary btn-sm" id="weekPrev">← Föreg. vecka</button>
+                <button type="button" class="week-nav-btn" id="weekPrev">← Föreg. vecka</button>
                 <span id="weekLabel" class="week-label"></span>
-                <button type="button" class="btn btn-secondary btn-sm" id="weekToday">Idag</button>
-                <button type="button" class="btn btn-secondary btn-sm" id="weekNext">Nästa vecka →</button>
+                <button type="button" class="week-nav-btn" id="weekToday">Idag</button>
+                <button type="button" class="week-nav-btn" id="weekNext">Nästa vecka →</button>
             </div>
             <div id="apptBody"></div>
         </div>
@@ -176,39 +170,36 @@ function renderBody() {
     const rows = scopedRows();
     const body = document.getElementById("apptBody");
 
-    if (viewMode === "week" && !scheduleSearchRows) {
-        document.getElementById("weekLabel").textContent = weekRangeLabel(weekStart);
-        body.innerHTML = `<div id="calContainer" class="cal-wrap"></div>`;
-        renderWeekCalendar(document.getElementById("calContainer"), {
-            appointments: rows,
-            weekStart,
-            staffName,
-            deptName,
-        });
+    if (scheduleSearchRows) {
+        body.innerHTML = rows.length
+            ? `<div class="row-list">${rows.map(searchRow).join("")}</div>`
+            : `<p class="text-muted" style="padding:8px 4px;">Inga bokningar för det valet.</p>`;
         return;
     }
 
-    body.innerHTML = `
-        <div class="table-wrap">
-            <table>
-                <thead><tr><th>Tid</th><th>Patient</th><th>Personal</th><th>Avdelning</th><th>Status</th><th>Notering</th></tr></thead>
-                <tbody>${rows.length ? [...rows].sort((a, b) => new Date(b.scheduledAt) - new Date(a.scheduledAt)).map(apptRow).join("") : emptyRow(6)}</tbody>
-            </table>
-        </div>
-    `;
+    if (viewMode === "week") {
+        document.getElementById("weekLabel").textContent = weekRangeLabel(weekStart);
+        body.innerHTML = `<div id="calContainer" class="cal-wrap"></div>`;
+        renderWeekCalendar(document.getElementById("calContainer"), { appointments: rows, weekStart, staffName, deptName });
+        return;
+    }
+
+    body.innerHTML = `<div id="calListContainer"></div>`;
+    renderListView(document.getElementById("calListContainer"), { appointments: rows, weekStart, staffName, deptName });
 }
 
-function apptRow(a) {
-    const touchesMine = me.departmentId != null && a.departmentId === me.departmentId;
+function searchRow(a) {
+    const accent = statusBadgeClass(a.status).replace("badge-", "");
     return `
-        <tr class="${touchesMine ? "row-highlight" : ""}">
-            <td><strong>${formatDateTime(a.scheduledAt)}</strong></td>
-            <td>#${safe(a.patientId)}</td>
-            <td>${staffName(a.staffId)}</td>
-            <td>${deptName(a.departmentId)}</td>
-            <td>${statusBadge(a.status)}</td>
-            <td>${safe(a.note)}</td>
-        </tr>`;
+        <div class="row-list-item">
+            <div class="row-list-time mono">${formatDateTime(a.scheduledAt)}</div>
+            <div class="row-list-accent row-list-accent-${accent}"></div>
+            <div class="row-list-body">
+                <div class="row-list-title">Patient #${safe(a.patientId)}</div>
+                <div class="row-list-meta">${[staffName(a.staffId), deptName(a.departmentId), a.note].filter(Boolean).join(" · ")}</div>
+            </div>
+            <span class="badge ${statusBadgeClass(a.status)}">${safe(a.status)}</span>
+        </div>`;
 }
 
 async function loadAll() {
@@ -233,8 +224,6 @@ async function handleScheduleSearch() {
     const date = document.getElementById("scheduleDate").value;
     if (!staffId || !date) return;
 
-    viewMode = "list";
-    document.querySelectorAll("#viewModeToggle .segmented-btn").forEach((b) => b.classList.toggle("active", b.dataset.mode === "list"));
     scheduleSearchLabel = `Schema — ${staffName(Number(staffId))}, ${date}`;
     document.getElementById("apptBody").innerHTML = loadingRow(6, "Söker...");
     try {

@@ -2,6 +2,15 @@ export function safe(val) {
     return val === null || val === undefined || val === "" ? "-" : val;
 }
 
+// Sets the persistent top-bar title/subtitle — call once near the top of a page's
+// render() in place of the old inline .page-header block.
+export function setTopbar(title, sub = "") {
+    const titleEl = document.getElementById("topbar-title");
+    const subEl = document.getElementById("topbar-sub");
+    if (titleEl) titleEl.textContent = title;
+    if (subEl) subEl.textContent = sub;
+}
+
 export function escapeHtml(str) {
     return String(str ?? "").replace(/[&<>"']/g, (c) => ({
         "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",

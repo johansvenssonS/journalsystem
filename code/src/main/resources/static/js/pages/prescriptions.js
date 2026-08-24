@@ -1,21 +1,15 @@
 import { getPrescriptions, getPrescriptionsByPersonalNumber, createPrescription, getPatients, getCurrentUser } from "../api.js";
 import { loadCurrentUser } from "../auth.js";
-import { safe, formatDate, statusBadge, loadingRow, emptyRow, errorRow, toastSuccess } from "../ui.js";
+import { safe, formatDate, statusBadge, loadingRow, emptyRow, errorRow, toastSuccess, setTopbar } from "../ui.js";
 import { can } from "../access.js";
 
 export async function render(container) {
     const me = await loadCurrentUser(getCurrentUser);
     const canCreate = can.createPrescription(me);
     const canLookup = can.lookupPrescription(me);
+    setTopbar("Recept", "Skriv ut och hantera recept");
 
     container.innerHTML = `
-        <header class="page-header">
-            <div>
-                <h2>Recept</h2>
-                <p>Skriv ut och hantera recept</p>
-            </div>
-        </header>
-
         ${canCreate ? `
         <div class="card mb-4">
             <div class="card-header">
