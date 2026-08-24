@@ -18,6 +18,7 @@ export async function render(container) {
             <div class="stat-card"><h3 id="stat-appointments">-</h3><p>Bokningar idag</p></div>
             <div class="stat-card"><h3 id="stat-prescriptions">-</h3><p>Aktiva recept</p></div>
             <div class="stat-card"><h3 id="stat-referrals">-</h3><p>Öppna remisser</p></div>
+            ${me.departmentId ? `<div class="stat-card stat-card-accent"><h3 id="stat-dept-today">-</h3><p>Bokningar idag · ${safe(me.departmentName)}</p></div>` : ""}
         </div>
 
         <div class="grid-2">
@@ -49,17 +50,17 @@ export async function render(container) {
         </div>
     `;
 
-    loadStats();
+    loadStats(me);
     loadSchedule(me);
     loadActivity();
 }
 
-async function loadStats() {
+async function loadStats(me) {
     getPatients()
         .then((rows) => (document.getElementById("stat-patients").textContent = rows.length))
         .catch(() => (document.getElementById("stat-patients").textContent = "-"));
 
-    loadTodayAppointmentCount();
+    loadTodayAppointmentCounts(me);
 
     getPrescriptions()
         .then((rows) => (document.getElementById("stat-prescriptions").textContent = rows.filter((p) => p.active).length))
@@ -73,15 +74,22 @@ async function loadStats() {
         .catch(() => (document.getElementById("stat-referrals").textContent = "-"));
 }
 
-async function loadTodayAppointmentCount() {
+async function loadTodayAppointmentCounts(me) {
     // No dedicated "count today" endpoint — approximate via /appointments and filter client-side.
     try {
         const rows = await getAppointments();
         const today = toDateInputValue();
-        const count = rows.filter((a) => a.scheduledAt && a.scheduledAt.startsWith(today)).length;
-        document.getElementById("stat-appointments").textContent = count;
+        const todayRows = rows.filter((a) => a.scheduledAt && a.scheduledAt.startsWith(today));
+        document.getElementById("stat-appointments").textContent = todayRows.length;
+
+        const deptStat = document.getElementById("stat-dept-today");
+        if (deptStat) {
+            deptStat.textContent = todayRows.filter((a) => a.departmentId === me.departmentId).length;
+        }
     } catch {
         document.getElementById("stat-appointments").textContent = "-";
+        const deptStat = document.getElementById("stat-dept-today");
+        if (deptStat) deptStat.textContent = "-";
     }
 }
 

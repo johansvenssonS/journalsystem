@@ -64,6 +64,11 @@ export function badge(text, cssClass) {
     return `<span class="badge ${cssClass}">${escapeHtml(text)}</span>`;
 }
 
+// Builds an id -> item lookup map, e.g. toMap(departments) for resolving departmentId to a name.
+export function toMap(list, key = "id") {
+    return Object.fromEntries((list || []).map((item) => [item[key], item]));
+}
+
 export function statusBadge(status) {
     if (status === null || status === undefined) return badge("-", "badge-gray");
     const label = typeof status === "boolean" ? (status ? "Aktivt" : "Inaktivt") : status;

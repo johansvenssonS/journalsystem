@@ -72,6 +72,7 @@ export const getRoles = () => publicFetch("/roles");
 export const getDepartments = () => apiFetch("/departments");
 export const getDepartmentsPublic = () => publicFetch("/departments");
 export const getStaff = () => apiFetch("/staff");
+export const getStaffEmployments = () => apiFetch("/staff-employments");
 
 // ================= Patients =================
 export const getPatients = () => apiFetch("/patients");

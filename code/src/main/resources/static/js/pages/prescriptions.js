@@ -1,11 +1,12 @@
 import { getPrescriptions, getPrescriptionsByPersonalNumber, createPrescription, getPatients, getCurrentUser } from "../api.js";
 import { loadCurrentUser } from "../auth.js";
 import { safe, formatDate, statusBadge, loadingRow, emptyRow, errorRow, toastSuccess } from "../ui.js";
+import { can } from "../access.js";
 
 export async function render(container) {
     const me = await loadCurrentUser(getCurrentUser);
-    const canCreate = me.role === "doctor";
-    const canLookup = me.role === "pharmacy";
+    const canCreate = can.createPrescription(me);
+    const canLookup = can.lookupPrescription(me);
 
     container.innerHTML = `
         <header class="page-header">

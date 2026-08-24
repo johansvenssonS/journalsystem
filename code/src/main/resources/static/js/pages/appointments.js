@@ -1,12 +1,25 @@
 import { getAppointments, getScheduleFor, createAppointment, getPatients, getStaff, getDepartments, getCurrentUser } from "../api.js";
 import { loadCurrentUser } from "../auth.js";
-import { safe, formatDateTime, toDateInputValue, toDateTimeLocalValue, statusBadge, loadingRow, emptyRow, errorRow, toastSuccess } from "../ui.js";
+import { safe, formatDateTime, toDateInputValue, toDateTimeLocalValue, statusBadge, loadingRow, emptyRow, errorRow, toastSuccess, toMap } from "../ui.js";
+import { can } from "../access.js";
+import { renderWeekCalendar, startOfWeek, addDays, weekRangeLabel } from "../components/calendar.js";
 
 let staffList = [];
+let staffMap = {};
+let departmentMap = {};
+let allAppointments = [];
+let me = null;
+
+let viewMode = "week"; // "week" | "list"
+let deptScope = "mine"; // "mine" | "all"
+let weekStart = startOfWeek(new Date());
+let scheduleSearchRows = null; // set when the staff-schedule search is active; overrides the list view
+let scheduleSearchLabel = "";
 
 export async function render(container) {
-    const me = await loadCurrentUser(getCurrentUser);
-    const canCreate = me.role === "RECEPTIONIST";
+    me = await loadCurrentUser(getCurrentUser);
+    const canCreate = can.createAppointment(me);
+    deptScope = me.departmentId != null && !can.viewAllAppointments(me) ? "mine" : "all";
 
     container.innerHTML = `
         <header class="page-header">
@@ -67,32 +80,36 @@ export async function render(container) {
                 <select id="scheduleStaff" class="form-control" style="max-width:280px;"><option value="">Välj personal...</option></select>
                 <input type="date" id="scheduleDate" class="form-control" style="max-width:200px;" value="${toDateInputValue()}">
                 <button id="scheduleBtn" class="btn btn-primary">Visa schema</button>
-                <button id="scheduleClear" class="btn btn-secondary">Visa alla bokningar</button>
+                <button id="scheduleClear" class="btn btn-secondary" hidden>Rensa sökning</button>
             </div>
         </div>
 
         <div class="card">
             <div class="card-header">
-                <h3 id="appt-list-title">Alla bokningar</h3>
-                <span class="api-badge">GET /appointments</span>
+                <h3 id="appt-list-title">Bokningar</h3>
+                <div class="toolbar">
+                    ${myDeptToggleHtml()}
+                    <div class="segmented" id="viewModeToggle">
+                        <button type="button" class="segmented-btn ${viewMode === "week" ? "active" : ""}" data-mode="week">Vecka</button>
+                        <button type="button" class="segmented-btn ${viewMode === "list" ? "active" : ""}" data-mode="list">Lista</button>
+                    </div>
+                </div>
             </div>
-            <div class="table-wrap">
-                <table>
-                    <thead><tr><th>Tid</th><th>Patient</th><th>Personal</th><th>Avdelning</th><th>Status</th><th>Notering</th></tr></thead>
-                    <tbody id="appt-tbody">${loadingRow(6)}</tbody>
-                </table>
+            <div id="weekNav" class="week-nav" ${viewMode === "list" ? "hidden" : ""}>
+                <button type="button" class="btn btn-secondary btn-sm" id="weekPrev">← Föreg. vecka</button>
+                <span id="weekLabel" class="week-label"></span>
+                <button type="button" class="btn btn-secondary btn-sm" id="weekToday">Idag</button>
+                <button type="button" class="btn btn-secondary btn-sm" id="weekNext">Nästa vecka →</button>
             </div>
+            <div id="apptBody"></div>
         </div>
     `;
 
-    loadStaffOptions();
-    loadAll();
+    loadStaffOptions().then(loadDepartmentMap).then(loadAll);
 
+    wireToolbar();
     document.getElementById("scheduleBtn").addEventListener("click", handleScheduleSearch);
-    document.getElementById("scheduleClear").addEventListener("click", () => {
-        document.getElementById("appt-list-title").textContent = "Alla bokningar";
-        loadAll();
-    });
+    document.getElementById("scheduleClear").addEventListener("click", clearScheduleSearch);
 
     if (canCreate) {
         loadCreateFormOptions();
@@ -100,59 +117,152 @@ export async function render(container) {
     }
 }
 
-function apptRow(a) {
+function myDeptToggleHtml() {
+    if (me.departmentId == null) return "";
     return `
-        <tr>
+        <div class="segmented" id="deptScopeToggle">
+            <button type="button" class="segmented-btn ${deptScope === "mine" ? "active" : ""}" data-scope="mine">Min avdelning</button>
+            <button type="button" class="segmented-btn ${deptScope === "all" ? "active" : ""}" data-scope="all">Alla avdelningar</button>
+        </div>`;
+}
+
+function wireToolbar() {
+    document.querySelectorAll("#viewModeToggle .segmented-btn").forEach((btn) => {
+        btn.addEventListener("click", () => {
+            viewMode = btn.dataset.mode;
+            document.querySelectorAll("#viewModeToggle .segmented-btn").forEach((b) => b.classList.toggle("active", b === btn));
+            document.getElementById("weekNav").hidden = viewMode !== "week";
+            renderBody();
+        });
+    });
+
+    const deptToggle = document.getElementById("deptScopeToggle");
+    if (deptToggle) {
+        deptToggle.querySelectorAll(".segmented-btn").forEach((btn) => {
+            btn.addEventListener("click", () => {
+                deptScope = btn.dataset.scope;
+                deptToggle.querySelectorAll(".segmented-btn").forEach((b) => b.classList.toggle("active", b === btn));
+                renderBody();
+            });
+        });
+    }
+
+    document.getElementById("weekPrev").addEventListener("click", () => { weekStart = addDays(weekStart, -7); renderBody(); });
+    document.getElementById("weekNext").addEventListener("click", () => { weekStart = addDays(weekStart, 7); renderBody(); });
+    document.getElementById("weekToday").addEventListener("click", () => { weekStart = startOfWeek(new Date()); renderBody(); });
+}
+
+function staffName(id) {
+    const s = staffMap[id];
+    return s ? `${s.firstName} ${s.lastName}` : id ? "Personal #" + id : "-";
+}
+
+function deptName(id) {
+    return departmentMap[id]?.name || (id ? "Avd #" + id : "-");
+}
+
+function scopedRows() {
+    if (scheduleSearchRows) return scheduleSearchRows;
+    if (deptScope === "mine" && me.departmentId != null) {
+        return allAppointments.filter((a) => a.departmentId === me.departmentId);
+    }
+    return allAppointments;
+}
+
+function renderBody() {
+    document.getElementById("appt-list-title").textContent = scheduleSearchRows ? scheduleSearchLabel : "Bokningar";
+    document.getElementById("weekNav").hidden = viewMode !== "week" || !!scheduleSearchRows;
+
+    const rows = scopedRows();
+    const body = document.getElementById("apptBody");
+
+    if (viewMode === "week" && !scheduleSearchRows) {
+        document.getElementById("weekLabel").textContent = weekRangeLabel(weekStart);
+        body.innerHTML = `<div id="calContainer" class="cal-wrap"></div>`;
+        renderWeekCalendar(document.getElementById("calContainer"), {
+            appointments: rows,
+            weekStart,
+            staffName,
+            deptName,
+        });
+        return;
+    }
+
+    body.innerHTML = `
+        <div class="table-wrap">
+            <table>
+                <thead><tr><th>Tid</th><th>Patient</th><th>Personal</th><th>Avdelning</th><th>Status</th><th>Notering</th></tr></thead>
+                <tbody>${rows.length ? [...rows].sort((a, b) => new Date(b.scheduledAt) - new Date(a.scheduledAt)).map(apptRow).join("") : emptyRow(6)}</tbody>
+            </table>
+        </div>
+    `;
+}
+
+function apptRow(a) {
+    const touchesMine = me.departmentId != null && a.departmentId === me.departmentId;
+    return `
+        <tr class="${touchesMine ? "row-highlight" : ""}">
             <td><strong>${formatDateTime(a.scheduledAt)}</strong></td>
             <td>#${safe(a.patientId)}</td>
             <td>${staffName(a.staffId)}</td>
-            <td>#${safe(a.departmentId)}</td>
+            <td>${deptName(a.departmentId)}</td>
             <td>${statusBadge(a.status)}</td>
             <td>${safe(a.note)}</td>
         </tr>`;
 }
 
-function staffName(id) {
-    const s = staffList.find((st) => st.id === id);
-    return s ? `${s.firstName} ${s.lastName}` : id ? "Personal #" + id : "-";
+async function loadAll() {
+    const body = document.getElementById("apptBody");
+    body.innerHTML = loadingRow(6);
+    try {
+        allAppointments = await getAppointments();
+        renderBody();
+    } catch (err) {
+        body.innerHTML = errorRow(6, err);
+    }
 }
 
-async function loadAll() {
-    const tbody = document.getElementById("appt-tbody");
-    tbody.innerHTML = loadingRow(6);
-    try {
-        const rows = await getAppointments();
-        rows.sort((a, b) => new Date(b.scheduledAt) - new Date(a.scheduledAt));
-        tbody.innerHTML = rows.length ? rows.map(apptRow).join("") : emptyRow(6);
-    } catch (err) {
-        tbody.innerHTML = errorRow(6, err);
-    }
+function clearScheduleSearch() {
+    scheduleSearchRows = null;
+    document.getElementById("scheduleClear").hidden = true;
+    renderBody();
 }
 
 async function handleScheduleSearch() {
     const staffId = document.getElementById("scheduleStaff").value;
     const date = document.getElementById("scheduleDate").value;
-    const tbody = document.getElementById("appt-tbody");
     if (!staffId || !date) return;
 
-    document.getElementById("appt-list-title").textContent = `Schema — ${staffName(Number(staffId))}, ${date}`;
-    tbody.innerHTML = loadingRow(6, "Söker...");
+    viewMode = "list";
+    document.querySelectorAll("#viewModeToggle .segmented-btn").forEach((b) => b.classList.toggle("active", b.dataset.mode === "list"));
+    scheduleSearchLabel = `Schema — ${staffName(Number(staffId))}, ${date}`;
+    document.getElementById("apptBody").innerHTML = loadingRow(6, "Söker...");
     try {
-        const rows = await getScheduleFor(staffId, date);
-        tbody.innerHTML = rows.length ? rows.map(apptRow).join("") : emptyRow(6, "Inga bokningar för det valet.");
+        scheduleSearchRows = await getScheduleFor(staffId, date);
+        document.getElementById("scheduleClear").hidden = false;
+        renderBody();
     } catch (err) {
-        tbody.innerHTML = errorRow(6, err);
+        document.getElementById("apptBody").innerHTML = errorRow(6, err);
     }
 }
 
 async function loadStaffOptions() {
     try {
         staffList = await getStaff();
+        staffMap = toMap(staffList);
         const select = document.getElementById("scheduleStaff");
         select.innerHTML = '<option value="">Välj personal...</option>' +
             staffList.map((s) => `<option value="${s.id}">${s.firstName} ${s.lastName}</option>`).join("");
     } catch {
         staffList = [];
+    }
+}
+
+async function loadDepartmentMap() {
+    try {
+        departmentMap = toMap(await getDepartments());
+    } catch {
+        departmentMap = {};
     }
 }
 
@@ -169,15 +279,15 @@ async function loadCreateFormOptions() {
         patientSelect.innerHTML = '<option value="">Kunde inte ladda patienter</option>';
     }
 
-    // staffList populated by loadStaffOptions, called in parallel — wait for it if not ready yet.
     if (staffList.length === 0) await loadStaffOptions();
     staffSelect.innerHTML = '<option value="">Välj personal...</option>' +
         staffList.map((s) => `<option value="${s.id}">${s.firstName} ${s.lastName}</option>`).join("");
 
     try {
-        const departments = await getDepartments();
+        if (Object.keys(departmentMap).length === 0) await loadDepartmentMap();
+        const list = Object.values(departmentMap);
         deptSelect.innerHTML = '<option value="">Välj avdelning...</option>' +
-            departments.map((d) => `<option value="${d.id}">${d.name}</option>`).join("");
+            list.map((d) => `<option value="${d.id}" ${me.departmentId === d.id ? "selected" : ""}>${d.name}</option>`).join("");
     } catch {
         deptSelect.innerHTML = '<option value="">Kunde inte ladda avdelningar</option>';
     }

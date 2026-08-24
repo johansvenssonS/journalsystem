@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>MedJournal</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -15,14 +15,8 @@
     <span class="logo-sub">Journalsystem</span>
   </div>
 
-  <nav class="menu">
-    <a href="#" class="menu-item active" data-target="dashboard"><span class="icon">⌂</span> Startsida</a>
-    <a href="#" class="menu-item" data-target="patients"><span class="icon">☺</span> Patienter</a>
-    <a href="#" class="menu-item" data-target="prescriptions"><span class="icon">℞</span> Recept</a>
-    <a href="#" class="menu-item" data-target="referrals"><span class="icon">→</span> Remisser</a>
-    <a href="#" class="menu-item" data-target="appointments"><span class="icon">🗓</span> Bokningar</a>
-    <a href="#" class="menu-item" data-target="directory"><span class="icon">☰</span> Personal &amp; avdelningar</a>
-    <a href="#" class="menu-item" data-target="audit"><span class="icon">◷</span> Granskningslogg</a>
+  <nav class="menu" id="menu">
+    <!-- Rendered by app.js from access.js's NAV_CONFIG, filtered to the logged-in role -->
   </nav>
 
   <div class="user-profile">

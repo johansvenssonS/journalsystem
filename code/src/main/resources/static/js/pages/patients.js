@@ -8,6 +8,7 @@ import {
     safe, escapeHtml, formatDate, formatDateTime, toDateInputValue,
     loadingRow, emptyRow, errorRow, toastError, toastSuccess,
 } from "../ui.js";
+import { can } from "../access.js";
 
 export async function render(container) {
     const me = await loadCurrentUser(getCurrentUser);
@@ -17,7 +18,7 @@ export async function render(container) {
 // ================= LIST VIEW =================
 
 async function renderList(container, me) {
-    const canCreate = me.role === "RECEPTIONIST";
+    const canCreate = can.createPatient(me);
 
     container.innerHTML = `
         <header class="page-header">
@@ -185,9 +186,19 @@ async function renderDetail(container, me, patientId) {
         return;
     }
 
-    const canEditContact = me.role === "RECEPTIONIST";
-    const canDiagnose = me.role === "doctor";
-    const canMeasure = me.role === "doctor" || me.role === "nurse";
+    const canEditContact = can.editPatientContact(me);
+    const canDiagnose = can.diagnose(me);
+    const canMeasure = can.registerMeasure(me);
+    const showMedical = can.viewPatientMedical(me);
+    const showJournal = can.viewPatientJournal(me);
+    const showCare = can.viewCareContacts(me);
+
+    const tabs = [
+        { id: "contact", label: "Kontaktuppgifter", show: true },
+        { id: "medical", label: "Medicinskt", show: showMedical },
+        { id: "care", label: "Vårdkontakter", show: showCare },
+        { id: "journal", label: "Journal & diagnoser", show: showJournal },
+    ].filter((t) => t.show);
 
     container.innerHTML = `
         <button type="button" class="back-link" id="backToList">← Tillbaka till patienter</button>
@@ -199,10 +210,7 @@ async function renderDetail(container, me, patientId) {
         </div>
 
         <div class="tabs">
-            <button class="tab-btn active" data-tab="contact">Kontaktuppgifter</button>
-            <button class="tab-btn" data-tab="medical">Medicinskt</button>
-            <button class="tab-btn" data-tab="care">Vårdkontakter</button>
-            <button class="tab-btn" data-tab="journal">Journal &amp; diagnoser</button>
+            ${tabs.map((t, i) => `<button class="tab-btn ${i === 0 ? "active" : ""}" data-tab="${t.id}">${t.label}</button>`).join("")}
         </div>
 
         <div class="tab-panel active" id="tab-contact">
@@ -215,6 +223,7 @@ async function renderDetail(container, me, patientId) {
             </div>
         </div>
 
+        ${showMedical ? `
         <div class="tab-panel" id="tab-medical">
             <div class="card">
                 <div class="card-header">
@@ -228,8 +237,9 @@ async function renderDetail(container, me, patientId) {
                     </div>
                 ` : '<p class="text-muted">Ingen medicinsk information registrerad.</p>'}
             </div>
-        </div>
+        </div>` : ""}
 
+        ${showCare ? `
         <div class="tab-panel" id="tab-care">
             <div class="card">
                 <div class="card-header">
@@ -238,8 +248,9 @@ async function renderDetail(container, me, patientId) {
                 </div>
                 ${renderCareContacts(dashboard.careContacts)}
             </div>
-        </div>
+        </div>` : ""}
 
+        ${showJournal ? `
         <div class="tab-panel" id="tab-journal">
             <div class="card">
                 <div class="card-header">
@@ -248,7 +259,7 @@ async function renderDetail(container, me, patientId) {
                 </div>
                 <div id="journal-timeline">${loadingRow(1)}</div>
             </div>
-        </div>
+        </div>` : ""}
     `;
 
     document.getElementById("backToList").addEventListener("click", () => renderList(container, me));
@@ -266,7 +277,7 @@ async function renderDetail(container, me, patientId) {
         document.getElementById("contactEditForm").addEventListener("submit", (e) => handleUpdateContact(e, patientId));
     }
 
-    renderJournalTimeline(dashboard, patientId, me, canDiagnose, canMeasure);
+    if (showJournal) renderJournalTimeline(dashboard, patientId, me, canDiagnose, canMeasure);
 }
 
 function contactReadOnly(d) {

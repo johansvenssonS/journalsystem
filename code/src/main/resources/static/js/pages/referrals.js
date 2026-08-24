@@ -1,12 +1,15 @@
 import { getReferrals, createReferral, getPatients, getDepartments, getCurrentUser } from "../api.js";
 import { loadCurrentUser } from "../auth.js";
-import { safe, formatDateTime, statusBadge, loadingRow, emptyRow, errorRow, toastSuccess } from "../ui.js";
+import { safe, formatDateTime, statusBadge, loadingRow, emptyRow, errorRow, toastSuccess, toMap } from "../ui.js";
+import { can } from "../access.js";
 
 let departmentMap = {};
+let myDepartmentId = null;
 
 export async function render(container) {
     const me = await loadCurrentUser(getCurrentUser);
-    const canCreate = me.role === "doctor";
+    const canCreate = can.createReferral(me);
+    myDepartmentId = me.departmentId ?? null;
 
     container.innerHTML = `
         <header class="page-header">
@@ -72,19 +75,20 @@ export async function render(container) {
 async function loadDepartmentMap() {
     try {
         const departments = await getDepartments();
-        departmentMap = Object.fromEntries(departments.map((d) => [d.id, d.name]));
+        departmentMap = toMap(departments);
     } catch {
         departmentMap = {};
     }
 }
 
 function deptName(id) {
-    return departmentMap[id] || (id ? "Avd #" + id : "-");
+    return departmentMap[id]?.name || (id ? "Avd #" + id : "-");
 }
 
 function referralRow(r) {
+    const touchesMine = myDepartmentId != null && (r.fromDepartmentId === myDepartmentId || r.toDepartmentId === myDepartmentId);
     return `
-        <tr>
+        <tr class="${touchesMine ? "row-highlight" : ""}">
             <td>#${safe(r.patientId)}</td>
             <td>${deptName(r.fromDepartmentId)}</td>
             <td>${deptName(r.toDepartmentId)}</td>
