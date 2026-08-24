@@ -32,7 +32,7 @@ public class DepartmentController {
     }
 
     /// US-20 — vårdpersonal ser alla patienter som är inskrivna på avdelningen.
-    @PreAuthorize("hasAnyAuthority('doctor','nurse')")
+    @PreAuthorize("hasRole('doctor') OR hasRole('nurse')")
     @GetMapping("/{id}/patients")
     public ResponseEntity<List<DepartmentPatientDTO>> getAdmittedPatients(@PathVariable Long id) {
         return ResponseEntity.ok(departmentService.getAdmittedPatients(id));
