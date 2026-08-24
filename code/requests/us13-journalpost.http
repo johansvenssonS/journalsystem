@@ -1,0 +1,116 @@
+### US-13 — Skapa journalpost
+### Kor requesterna i ordning. IntelliJ sparar sessionscookien mellan anropen.
+### Kraver ett inloggat lakarkonto (se us12-vardkontakt.http steg 1 om du saknar ett).
+
+@host = http://localhost:8080
+@user = adli.test
+@pass = ANGE_DITT_LOSENORD_HAR
+
+### 1. Logga in (form-data, inte JSON)
+POST {{host}}/login
+Content-Type: application/x-www-form-urlencoded
+
+username={{user}}&password={{pass}}
+
+### 2. Kontrollera inloggning
+GET {{host}}/auth/me
+
+### 3. HUVUDTESTET — skapa en ANTECKNING. Ska ge 201.
+POST {{host}}/journalentry
+Content-Type: application/json
+
+{
+  "careContactId": 1,
+  "createdBy": 1,
+  "type": "note",
+  "content": "Patienten klagar pa brostsmarta. Vilopuls 88."
+}
+
+> {%
+    client.test("201 Created", function() {
+        client.assert(response.status === 201, "Fick " + response.status);
+    });
+    client.test("Typ ar note", function() {
+        client.assert(response.body.type === "note", "Typ: " + response.body.type);
+    });
+    client.test("createdAt ar satt", function() {
+        client.assert(response.body.createdAt !== null, "createdAt saknas");
+    });
+    client.global.set("journalEntryId", response.body.id);
+%}
+
+### 4. Skapa en UNDERSOKNING. Ska ge 201.
+POST {{host}}/journalentry
+Content-Type: application/json
+
+{
+  "careContactId": 1,
+  "createdBy": 1,
+  "type": "examination",
+  "content": "EKG utfort, ingen ST-hojning."
+}
+
+### 5. Skapa en OPERATION. Ska ge 201.
+POST {{host}}/journalentry
+Content-Type: application/json
+
+{
+  "careContactId": 1,
+  "createdBy": 1,
+  "type": "operation",
+  "content": "Angiografi genomford utan komplikationer."
+}
+
+### 6. Hamta posten fran steg 3. Ska ge 200.
+GET {{host}}/journalentry/{{journalEntryId}}
+
+### 7. FELFALL — ogiltig typ. Ska ge 400 fran @Pattern.
+POST {{host}}/journalentry
+Content-Type: application/json
+
+{
+  "careContactId": 1,
+  "createdBy": 1,
+  "type": "rontgen",
+  "content": "Ogiltig typ"
+}
+
+> {%
+    client.test("400 Bad Request", function() {
+        client.assert(response.status === 400, "Fick " + response.status);
+    });
+%}
+
+### 8. FELFALL — vardkontakt som inte finns. Ska ge 404.
+POST {{host}}/journalentry
+Content-Type: application/json
+
+{
+  "careContactId": 99999,
+  "createdBy": 1,
+  "type": "note",
+  "content": "Finns inte"
+}
+
+> {%
+    client.test("404 Not Found", function() {
+        client.assert(response.status === 404, "Fick " + response.status);
+    });
+%}
+
+### 9. FELFALL — tomt innehall. Ska ge 400 fran @NotBlank.
+POST {{host}}/journalentry
+Content-Type: application/json
+
+{
+  "careContactId": 1,
+  "createdBy": 1,
+  "type": "note",
+  "content": ""
+}
+
+> {%
+    client.test("400 Bad Request", function() {
+        client.assert(response.status === 400, "Fick " + response.status);
+    });
+%}
