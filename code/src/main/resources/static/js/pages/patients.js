@@ -1,8 +1,8 @@
 import {
     getPatients, getPatientById, getPatientByPersonalNumber, createPatient,
-    getPatientDetails, getPatientDashboard, getPatientMedical, updatePatientContact,
+    getPatientDetails, getPatientDashboard, getPatientMedical, updatePatientContact, updatePatientMedical,
     getMeasures, createDiagnosis, createMeasure, createJournalEntry,
-    getDepartments, getStaff, getStaffEmployments, getRoles, createCareContact, dischargeCareContact, getCurrentUser,
+    getDepartments, getStaff, getStaffEmployments, getRoles, createCareContact, admitCareContact, dischargeCareContact, getCurrentUser,
 } from "../api.js";
 import { loadCurrentUser } from "../auth.js";
 import {
@@ -196,8 +196,10 @@ async function renderDetail(container, me, patientId) {
     const canMeasure = can.registerMeasure(me);
     const canCreateJournal = can.createJournalEntry(me);
     const canCreateCareContact = can.createCareContact(me);
+    const canAdmitCareContact = can.admitCareContact(me);
     const canDischargeCareContact = can.dischargeCareContact(me);
     const showMedical = can.viewPatientMedical(me);
+    const canEditMedical = can.editPatientMedical(me);
     const showJournal = can.viewPatientJournal(me);
     // Receptionist can't otherwise see care contacts, but still needs this tab to create one (US-12).
     const showCare = can.viewCareContacts(me) || canCreateCareContact;
@@ -259,14 +261,9 @@ async function renderDetail(container, me, patientId) {
             <div class="card">
                 <div class="card-header">
                     <h3>Medicinsk information</h3>
-                    <span class="api-badge">GET /patient-medicals/{id}</span>
+                    <span class="api-badge">GET /patient-medicals/{id}${canEditMedical ? " · PUT /patient-medicals/{id}" : ""}</span>
                 </div>
-                ${medical ? `
-                    <div class="form-grid">
-                        <div class="form-group"><label>Blodgrupp</label><div>${safe(medical.bloodType)}</div></div>
-                        <div class="form-group full-width"><label>Allergier</label><div>${safe(medical.allergies)}</div></div>
-                    </div>
-                ` : '<p class="text-muted">Ingen medicinsk information registrerad.</p>'}
+                ${canEditMedical ? medicalEditForm(medical) : medicalReadOnly(medical)}
             </div>
         </div>` : ""}
 
@@ -283,9 +280,9 @@ async function renderDetail(container, me, patientId) {
             <div class="card">
                 <div class="card-header">
                     <h3>Vårdkontakter</h3>
-                    <span class="api-badge">GET /patients/{id}/dashboard · PATCH /care-contacts/{id}/discharged</span>
+                    <span class="api-badge">GET /patients/{id}/dashboard · PATCH /care-contacts/{id}/admitted · PATCH /care-contacts/{id}/discharged</span>
                 </div>
-                ${renderCareContacts(dashboard.careContacts, canDischargeCareContact)}
+                ${renderCareContacts(dashboard.careContacts, canAdmitCareContact, canDischargeCareContact)}
             </div>
         </div>` : ""}
 
@@ -323,6 +320,10 @@ async function renderDetail(container, me, patientId) {
         document.getElementById("contactEditForm").addEventListener("submit", (e) => handleUpdateContact(e, patientId));
     }
 
+    if (canEditMedical) {
+        document.getElementById("medicalEditForm").addEventListener("submit", (e) => handleUpdateMedical(e, patientId));
+    }
+
     const journalForm = document.getElementById("createJournalEntryForm");
     if (journalForm) journalForm.addEventListener("submit", (e) => handleCreateJournalEntry(e, me, patientId));
 
@@ -333,6 +334,12 @@ async function renderDetail(container, me, patientId) {
     if (ccDepartmentSelect) {
         ccDepartmentSelect.addEventListener("change", () => {
             document.getElementById("ccResponsible").innerHTML = staffOptionsForDept(staffByDept, ccDepartmentSelect.value);
+        });
+    }
+
+    if (canAdmitCareContact) {
+        container.querySelectorAll(".admit-btn").forEach((btn) => {
+            btn.addEventListener("click", () => handleAdmit(btn.dataset.ccId, me, patientId));
         });
     }
 
@@ -411,14 +418,65 @@ async function handleUpdateContact(e, patientId) {
     }
 }
 
-function renderCareContacts(contacts, canDischarge) {
+function medicalReadOnly(m) {
+    if (!m || (!m.bloodType && !m.allergies)) {
+        return '<p class="text-muted">Ingen medicinsk information registrerad.</p>';
+    }
+    return `
+        <div class="form-grid">
+            <div class="form-group"><label>Blodgrupp</label><div>${safe(m.bloodType)}</div></div>
+            <div class="form-group full-width"><label>Allergier</label><div>${safe(m.allergies)}</div></div>
+        </div>
+    `;
+}
+
+function medicalEditForm(m) {
+    return `
+        <div id="medical-alert" class="alert alert-error" hidden></div>
+        <form id="medicalEditForm">
+            <div class="form-grid">
+                <div class="form-group">
+                    <label for="mBloodType">Blodgrupp</label>
+                    <input type="text" id="mBloodType" class="form-control" placeholder="t.ex. A+" value="${escapeHtml(m?.bloodType || "")}">
+                </div>
+                <div class="form-group full-width">
+                    <label for="mAllergies">Allergier</label>
+                    <input type="text" id="mAllergies" class="form-control" placeholder="t.ex. Penicillin" value="${escapeHtml(m?.allergies || "")}">
+                </div>
+            </div>
+            <button type="submit" class="btn btn-primary">Spara medicinsk information</button>
+        </form>
+    `;
+}
+
+async function handleUpdateMedical(e, patientId) {
+    e.preventDefault();
+    const alertBox = document.getElementById("medical-alert");
+    alertBox.hidden = true;
+
+    const payload = {
+        bloodType: document.getElementById("mBloodType").value.trim(),
+        allergies: document.getElementById("mAllergies").value.trim(),
+    };
+
+    try {
+        await updatePatientMedical(patientId, payload);
+        toastSuccess("Medicinsk information uppdaterad.");
+    } catch (err) {
+        alertBox.textContent = err.message;
+        alertBox.hidden = false;
+    }
+}
+
+function renderCareContacts(contacts, canAdmit, canDischarge) {
     if (!contacts || contacts.length === 0) {
         return '<p class="text-muted">Inga vårdkontakter registrerade.</p>';
     }
+    const showActions = canAdmit || canDischarge;
     return `
         <div class="table-wrap">
             <table>
-                <thead><tr><th>Inskriven</th><th>Avdelning-ID</th><th>Ansvarig</th><th>Orsak</th><th>Status</th>${canDischarge ? "<th></th>" : ""}</tr></thead>
+                <thead><tr><th>Inskriven</th><th>Avdelning-ID</th><th>Ansvarig</th><th>Orsak</th><th>Status</th>${showActions ? "<th></th>" : ""}</tr></thead>
                 <tbody>
                     ${contacts.map((c) => `
                         <tr>
@@ -427,7 +485,10 @@ function renderCareContacts(contacts, canDischarge) {
                             <td>${c.responsibleId ? "Personal #" + c.responsibleId : "-"}</td>
                             <td>${safe(c.reason)}</td>
                             <td><span class="badge badge-blue">${safe(c.status)}</span></td>
-                            ${canDischarge ? `<td class="text-right">${c.status !== "discharged" ? `<button type="button" class="btn btn-secondary btn-sm discharge-btn" data-cc-id="${c.id}">Skriv ut</button>` : ""}</td>` : ""}
+                            ${showActions ? `<td class="text-right">
+                                ${canAdmit && c.status === "planned" ? `<button type="button" class="btn btn-secondary btn-sm admit-btn" data-cc-id="${c.id}">Lägg in</button>` : ""}
+                                ${canDischarge && c.status !== "discharged" ? `<button type="button" class="btn btn-secondary btn-sm discharge-btn" data-cc-id="${c.id}">Skriv ut</button>` : ""}
+                            </td>` : ""}
                         </tr>`).join("")}
                 </tbody>
             </table>
@@ -493,6 +554,17 @@ async function handleCreateCareContact(e, me, patientId) {
     } catch (err) {
         alertBox.textContent = err.message;
         alertBox.hidden = false;
+    }
+}
+
+// Läkaren lägger in patienten från en planerad vårdkontakt.
+async function handleAdmit(careContactId, me, patientId) {
+    try {
+        await admitCareContact(careContactId);
+        toastSuccess("Patienten lades in.");
+        renderDetail(document.getElementById("content"), me, patientId);
+    } catch (err) {
+        toastError(err);
     }
 }
 

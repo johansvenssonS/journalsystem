@@ -44,6 +44,13 @@ public class CareContactController {
         return ResponseEntity.status(201).body(careContactService.createCareContact(request));
     }
 
+    /// Läkare lägger in patienten från en planerad vårdkontakt.
+    @PreAuthorize("hasRole('doctor')")
+    @PatchMapping("/care-contacts/{id}/admitted")
+    public ResponseEntity<CareContactDTO> admitCareContact(@PathVariable Long id) {
+        return ResponseEntity.ok(careContactService.admitCareContact(id));
+    }
+
     /// US-17 — läkare skriver ut en patient. Bodyn är frivillig; utan den
     /// sätts utskrivningsdatum till nu.
     @PreAuthorize("hasRole('doctor')")

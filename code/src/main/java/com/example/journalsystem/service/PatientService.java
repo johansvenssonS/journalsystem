@@ -5,9 +5,11 @@ import com.example.journalsystem.dto.PatientResponse;
 import com.example.journalsystem.dto.CreatePatientRequest;
 import com.example.journalsystem.entities.Patient;
 import com.example.journalsystem.entities.PatientContact;
+import com.example.journalsystem.entities.PatientMedical;
 import com.example.journalsystem.exceptions.DuplicateResourceException;
 import com.example.journalsystem.exceptions.ResourceNotFoundException;
 import com.example.journalsystem.repository.PatientContactRepository;
+import com.example.journalsystem.repository.PatientMedicalRepository;
 import com.example.journalsystem.repository.PatientRepository;
 import com.example.journalsystem.mapper.PatientMapper;
 
@@ -21,11 +23,15 @@ public class PatientService {
     private final PatientRepository patientRepository;
     private final PatientMapper patientMapper;
     private final PatientContactRepository patientContactRepository;
+    private final PatientMedicalRepository patientMedicalRepository;
 
-    public PatientService(PatientRepository patientRepository, PatientMapper patientMapper, PatientContactRepository patientContactRepository) {
+    public PatientService(PatientRepository patientRepository, PatientMapper patientMapper,
+                          PatientContactRepository patientContactRepository,
+                          PatientMedicalRepository patientMedicalRepository) {
         this.patientRepository = patientRepository;
         this.patientMapper = patientMapper;
         this.patientContactRepository = patientContactRepository;
+        this.patientMedicalRepository = patientMedicalRepository;
     }
 
     public List<PatientResponse> getAll(){
@@ -49,11 +55,15 @@ public class PatientService {
         Patient patient = patientMapper.toEntity(createPatientRequest);
         Patient savedPatient = patientRepository.save(patient);
 
-        // Every patient needs its 1:1 patient_contact companion row to exist from the start —
-        // receptionisten fyller i telefon/adress m.m. senare via kontaktuppgifter-fliken.
+        // Every patient needs its 1:1 patient_contact and patient_medical companion rows to
+        // exist from the start — vårdpersonal fyller i uppgifterna senare via respektive flik.
         PatientContact patientContact = new PatientContact();
         patientContact.setPatient(savedPatient);
         patientContactRepository.save(patientContact);
+
+        PatientMedical patientMedical = new PatientMedical();
+        patientMedical.setPatient(savedPatient);
+        patientMedicalRepository.save(patientMedical);
 
         return patientMapper.toDto(savedPatient);
     }

@@ -44,6 +44,7 @@ export const can = {
     createPatient: (me) => me?.role === ROLES.RECEPTIONIST,
     editPatientContact: (me) => me?.role === ROLES.RECEPTIONIST,
     viewPatientMedical: (me) => me?.role === ROLES.DOCTOR || me?.role === ROLES.NURSE,
+    editPatientMedical: (me) => me?.role === ROLES.DOCTOR || me?.role === ROLES.NURSE,
     viewPatientJournal: (me) => me?.role === ROLES.DOCTOR || me?.role === ROLES.NURSE,
     viewCareContacts: (me) => me?.role === ROLES.DOCTOR || me?.role === ROLES.NURSE || me?.role === ROLES.ASSISTANT_NURSE,
     // US-13/US-22 — doctors may create any entry type, nurses only "note" (enforced again server-side).
@@ -59,6 +60,8 @@ export const can = {
     viewAllAppointments: (me) => me?.role === ROLES.RECEPTIONIST,
     // US-12 — receptionisten (admin-rollen i systemet) skapar vårdkontakten vid inskrivning.
     createCareContact: (me) => me?.role === ROLES.RECEPTIONIST,
+    // Läkaren lägger in patienten från en planerad vårdkontakt.
+    admitCareContact: (me) => me?.role === ROLES.DOCTOR,
     // US-17 — läkare skriver ut patienten.
     dischargeCareContact: (me) => me?.role === ROLES.DOCTOR,
     // US-20 — vårdpersonal ser vilka patienter som är inskrivna på en avdelning.

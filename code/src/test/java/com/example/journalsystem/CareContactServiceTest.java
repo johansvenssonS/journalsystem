@@ -27,7 +27,8 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
-/// US-12 — Som läkare vill jag kunna skapa en ny vårdkontakt för en patient på min avdelning.
+/// US-12 — receptionisten skapar en ny vårdkontakt (planned) för en patient; läkaren
+/// lägger sedan in eller skriver ut patienten.
 @ExtendWith(MockitoExtension.class)
 class CareContactServiceTest {
 
@@ -99,8 +100,8 @@ class CareContactServiceTest {
     }
 
     @Test
-    @DisplayName("createCareContact - ska sätta status till admitted och fylla i admitDate automatiskt")
-    void createCareContact_ShouldSetStatusAdmittedAndAdmitDate() {
+    @DisplayName("createCareContact - ska sätta status till planned och fylla i admitDate automatiskt")
+    void createCareContact_ShouldSetStatusPlannedAndAdmitDate() {
         // Arrange
         when(patientRepository.existsById(1L)).thenReturn(true);
         when(departmentRepository.existsById(2L)).thenReturn(true);
@@ -115,12 +116,48 @@ class CareContactServiceTest {
         verify(careContactRepository).save(careContactCaptor.capture());
         CareContact captured = careContactCaptor.getValue();
 
-        assertThat(captured.getStatus()).isEqualTo(CareContactService.STATUS_ADMITTED);
+        assertThat(captured.getStatus()).isEqualTo(CareContactService.STATUS_PLANNED);
         assertThat(captured.getAdmitDate()).isNotNull();
         assertThat(captured.getDischargeDate()).isNull();
         assertThat(captured.getPatientId()).isEqualTo(1L);
         assertThat(captured.getDepartmentId()).isEqualTo(2L);
         assertThat(captured.getResponsibleStaffId()).isEqualTo(3L);
+    }
+
+    @Test
+    @DisplayName("admitCareContact - ska sätta status till admitted när vårdkontakten är planned")
+    void admitCareContact_WhenPlanned_ShouldSetStatusAdmitted() {
+        // Arrange
+        CareContact plannedContact = new CareContact();
+        plannedContact.setId(10L);
+        plannedContact.setStatus(CareContactService.STATUS_PLANNED);
+        when(careContactRepository.findById(10L)).thenReturn(java.util.Optional.of(plannedContact));
+        when(careContactRepository.save(any(CareContact.class))).thenReturn(plannedContact);
+        when(careContactMapper.toDto(plannedContact)).thenReturn(careContactDTO);
+
+        // Act
+        careContactService.admitCareContact(10L);
+
+        // Assert
+        verify(careContactRepository).save(careContactCaptor.capture());
+        CareContact captured = careContactCaptor.getValue();
+        assertThat(captured.getStatus()).isEqualTo(CareContactService.STATUS_ADMITTED);
+        assertThat(captured.getAdmitDate()).isNotNull();
+    }
+
+    @Test
+    @DisplayName("admitCareContact - ska kasta DuplicateResourceException när vårdkontakten inte längre är planned")
+    void admitCareContact_WhenNotPlanned_ShouldThrowException() {
+        // Arrange
+        CareContact admittedContact = new CareContact();
+        admittedContact.setId(10L);
+        admittedContact.setStatus(CareContactService.STATUS_ADMITTED);
+        when(careContactRepository.findById(10L)).thenReturn(java.util.Optional.of(admittedContact));
+
+        // Act & Assert
+        assertThatThrownBy(() -> careContactService.admitCareContact(10L))
+                .isInstanceOf(com.example.journalsystem.exceptions.DuplicateResourceException.class);
+        verify(careContactRepository, never()).save(any());
     }
 
     @Test

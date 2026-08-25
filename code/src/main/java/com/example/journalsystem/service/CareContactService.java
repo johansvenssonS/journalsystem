@@ -84,13 +84,35 @@ public class CareContactService {
         careContact.setResponsibleStaffId(request.getResponsibleStaffId());
         careContact.setReason(request.getReason());
         careContact.setAdmitDate(Timestamp.from(Instant.now()));
+        careContact.setStatus(STATUS_PLANNED);
+
+        return careContactMapper.toDto(careContactRepository.save(careContact));
+    }
+
+    /// Läkaren lägger in patienten efter ett planerat besök — sätter status till
+    /// admitted och uppdaterar admit_date till den faktiska inskrivningstidpunkten
+    /// (inte tidpunkten då vårdkontakten bokades).
+    @Transactional
+    public CareContactDTO admitCareContact(Long id) {
+
+        CareContact careContact = careContactRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Vårdkontakt med id: " + id + " hittades inte"));
+
+        if (!STATUS_PLANNED.equals(careContact.getStatus())) {
+            throw new DuplicateResourceException(
+                    "Vårdkontakt med id: " + id + " kan inte läggas in — status är redan " + careContact.getStatus());
+        }
+
         careContact.setStatus(STATUS_ADMITTED);
+        careContact.setAdmitDate(Timestamp.from(Instant.now()));
 
         return careContactMapper.toDto(careContactRepository.save(careContact));
     }
 
     /// US-17 — skriver ut en patient genom att sätta vårdkontaktens status
-    /// till discharged och fylla i utskrivningsdatum.
+    /// till discharged och fylla i utskrivningsdatum. Kan ske direkt från planned
+    /// (ett besök som aldrig krävde inläggning) eller från admitted.
     @Transactional
     public CareContactDTO dischargeCareContact(Long id, DischargeCareContactRequest request) {
 
