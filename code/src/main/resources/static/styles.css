@@ -900,6 +900,145 @@ textarea.form-control { resize: vertical; min-height: 90px; }
 .auth-form[hidden] { display: none; }
 .auth-form .btn { width: 100%; justify-content: center; margin-top: 4px; }
 
+/* ============ HOSPITAL OVERVIEW (receptionist Startsida) ============ */
+
+.hosp-dept-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 14px;
+}
+
+.hosp-dept-card { cursor: pointer; transition: border-color 0.15s ease, box-shadow 0.15s ease; }
+.hosp-dept-card:hover { border-color: var(--primary); box-shadow: var(--shadow-sm); }
+
+.hosp-dept-head { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+
+.hosp-dept-badge {
+  width: 26px;
+  height: 26px;
+  border-radius: 999px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11.5px;
+  font-weight: 600;
+  background: var(--primary-light);
+  color: var(--primary-dark);
+}
+
+.hosp-dept-title { min-width: 0; }
+.hosp-dept-name { font-size: 13.5px; font-weight: 600; color: var(--text-dark); letter-spacing: -0.01em; }
+.hosp-dept-spec { font-size: 11px; margin-top: 2px; }
+
+.hosp-dept-stats {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+.hosp-dept-stat-label { font-family: 'IBM Plex Mono', monospace; font-size: 9px; letter-spacing: 0.1em; color: var(--text-faint); text-transform: uppercase; }
+.hosp-dept-stat-value { font-size: 15px; font-weight: 600; letter-spacing: -0.01em; color: var(--text-dark); margin-top: 2px; }
+
+/* ---- Modal ---- */
+
+.hosp-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(8,12,22,0.62);
+  backdrop-filter: blur(3px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+  z-index: 40;
+}
+
+.hosp-modal {
+  width: 720px;
+  max-width: 100%;
+  max-height: 86vh;
+  overflow: auto;
+  background: var(--white);
+  color: var(--text-dark);
+  border-radius: 16px;
+  box-shadow: 0 40px 90px -20px rgba(6,10,20,0.6);
+}
+
+.hosp-modal-head {
+  padding: 22px 26px 18px;
+  border-bottom: 1px solid var(--border-color-soft);
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+}
+.hosp-modal-bar { width: 6px; height: 44px; border-radius: 6px; flex-shrink: 0; background: var(--primary); }
+.hosp-modal-title-wrap { flex: 1; min-width: 0; }
+.hosp-modal-eyebrow { font-family: 'IBM Plex Mono', monospace; font-size: 9.5px; letter-spacing: 0.14em; color: var(--text-faint); text-transform: uppercase; }
+.hosp-modal-title { font-size: 20px; font-weight: 600; letter-spacing: -0.02em; margin-top: 4px; }
+.hosp-modal-close {
+  width: 30px;
+  height: 30px;
+  border-radius: 999px;
+  border: 1px solid var(--border-color);
+  background: var(--white);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--text-muted);
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.hosp-modal-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  border-bottom: 1px solid var(--border-color-soft);
+}
+.hosp-modal-stat { padding: 16px 18px; border-right: 1px solid var(--border-color-soft); }
+.hosp-modal-stat:last-child { border-right: none; }
+.hosp-modal-stat-label { font-family: 'IBM Plex Mono', monospace; font-size: 9.5px; letter-spacing: 0.12em; color: var(--text-faint); text-transform: uppercase; }
+.hosp-modal-stat-value { font-size: 21px; font-weight: 600; letter-spacing: -0.02em; margin-top: 5px; }
+
+.hosp-modal-body { display: grid; grid-template-columns: 1fr 1fr; gap: 26px; padding: 20px 26px; }
+.hosp-modal-section-title { font-size: 12px; font-weight: 600; color: #29334a; margin-bottom: 10px; }
+
+.hosp-person-list { display: flex; flex-direction: column; gap: 8px; }
+.hosp-person { display: flex; align-items: center; gap: 11px; }
+.hosp-person-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  background: var(--primary-light);
+  color: #29334a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10.5px;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+.hosp-person-name { font-size: 12.5px; font-weight: 500; }
+.hosp-person-role { font-size: 11px; color: var(--text-faint); }
+
+.hosp-fact-row { display: flex; justify-content: space-between; gap: 12px; font-size: 12.5px; padding: 5px 0; }
+.hosp-fact-row span:first-child { color: var(--text-faint); }
+.hosp-fact-row span:last-child { color: var(--text-dark); font-weight: 500; font-size: 12px; }
+
+.hosp-modal-footer {
+  padding: 16px 26px 22px;
+  border-top: 1px solid var(--border-color-soft);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+@media (max-width: 640px) {
+  .hosp-modal-stats { grid-template-columns: repeat(2, 1fr); }
+  .hosp-modal-body { grid-template-columns: 1fr; }
+}
+
 /* ============ RESPONSIVE ============ */
 
 @media (max-width: 1100px) {

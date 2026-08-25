@@ -67,7 +67,7 @@ function blockStyle(p) {
     return `top:${top}px;height:${height}px;width:calc(${widthPct}% - 4px);left:calc(${leftPct}% + 2px);`;
 }
 
-export function renderWeekCalendar(container, { appointments, weekStart, staffName, deptName }) {
+export function renderWeekCalendar(container, { appointments, weekStart, staffName, deptName, patientName }) {
     const days = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
     const hours = Array.from({ length: END_HOUR - START_HOUR }, (_, i) => START_HOUR + i);
     const totalHeight = hours.length * HOUR_HEIGHT;
@@ -94,7 +94,7 @@ export function renderWeekCalendar(container, { appointments, weekStart, staffNa
                     </div>
                     <div class="cal-day-body" style="height:${totalHeight}px;">
                         ${hours.map((_, hi) => `<div class="cal-hour-row" style="top:${hi * HOUR_HEIGHT}px;height:${HOUR_HEIGHT}px;"></div>`).join("")}
-                        ${byDay[i].length === 0 ? `<div class="cal-empty-day">Inga<br>bokningar</div>` : assignLanes(byDay[i]).map((p) => calBlock(p.appt, blockStyle(p), staffName, deptName)).join("")}
+                        ${byDay[i].length === 0 ? `<div class="cal-empty-day">Inga<br>bokningar</div>` : assignLanes(byDay[i]).map((p) => calBlock(p.appt, blockStyle(p), staffName, deptName, patientName)).join("")}
                         ${isToday(day) && nowTop != null ? `<div class="cal-now-line" style="top:${nowTop}px;"></div>` : ""}
                     </div>
                 </div>
@@ -106,21 +106,23 @@ export function renderWeekCalendar(container, { appointments, weekStart, staffNa
     `;
 }
 
-function calBlock(a, style, staffName, deptName) {
+function calBlock(a, style, staffName, deptName, patientName) {
     const time = a.scheduledAt ? new Date(a.scheduledAt).toLocaleTimeString("sv-SE", { hour: "2-digit", minute: "2-digit" }) : "-";
     const who = staffName ? staffName(a.staffId) : "";
     const dept = deptName ? deptName(a.departmentId) : "";
+    const title = (patientName && patientName(a.patientId)) || `Patient #${a.patientId ?? "-"}`;
+    const sub = [a.note, who || dept].filter(Boolean).join(" · ");
     return `
-        <div class="cal-block cal-block-${statusBadgeClass(a.status).replace("badge-", "")}" title="${escapeHtml(time + " · Patient #" + a.patientId + (a.note ? " · " + a.note : ""))}" style="${style}">
+        <div class="cal-block cal-block-${statusBadgeClass(a.status).replace("badge-", "")}" title="${escapeHtml([time, title, a.note, who || dept].filter(Boolean).join(" · "))}" style="${style}">
             <span class="cal-block-time mono">${time}</span>
-            <span class="cal-block-title">Patient #${escapeHtml(String(a.patientId ?? "-"))}</span>
-            ${who ? `<span class="cal-block-sub">${escapeHtml(who)}</span>` : dept ? `<span class="cal-block-sub">${escapeHtml(dept)}</span>` : ""}
+            <span class="cal-block-title">${escapeHtml(title)}</span>
+            ${sub ? `<span class="cal-block-sub">${escapeHtml(sub)}</span>` : ""}
         </div>
     `;
 }
 
 // Day-sectioned alternative to the grid — same data, reuses the dashboard's row-list look.
-export function renderListView(container, { appointments, weekStart, staffName, deptName }) {
+export function renderListView(container, { appointments, weekStart, staffName, deptName, patientName }) {
     const days = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
     const now = new Date();
     const isToday = (d) => d.toDateString() === now.toDateString();
@@ -142,23 +144,24 @@ export function renderListView(container, { appointments, weekStart, staffName, 
                     </div>
                     ${byDay[i].length === 0
                         ? `<div class="cal-day-section-empty">Inga bokningar den här dagen.</div>`
-                        : `<div class="row-list">${byDay[i].map((a) => listRow(a, staffName, deptName)).join("")}</div>`}
+                        : `<div class="row-list">${byDay[i].map((a) => listRow(a, staffName, deptName, patientName)).join("")}</div>`}
                 </section>
             `).join("")}
         </div>
     `;
 }
 
-function listRow(a, staffName, deptName) {
+function listRow(a, staffName, deptName, patientName) {
     const accent = statusBadgeClass(a.status).replace("badge-", "");
     const who = staffName ? staffName(a.staffId) : "";
     const dept = deptName ? deptName(a.departmentId) : "";
+    const title = (patientName && patientName(a.patientId)) || `Patient #${safe(a.patientId)}`;
     return `
         <div class="row-list-item">
             <div class="row-list-time mono">${a.scheduledAt ? new Date(a.scheduledAt).toLocaleTimeString("sv-SE", { hour: "2-digit", minute: "2-digit" }) : "-"}</div>
             <div class="row-list-accent row-list-accent-${accent}"></div>
             <div class="row-list-body">
-                <div class="row-list-title">Patient #${safe(a.patientId)}</div>
+                <div class="row-list-title">${title}</div>
                 <div class="row-list-meta">${[who, dept, a.note].filter(Boolean).join(" · ")}</div>
             </div>
             <span class="badge ${statusBadgeClass(a.status)}">${safe(a.status)}</span>

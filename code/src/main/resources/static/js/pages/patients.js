@@ -3,6 +3,7 @@ import {
     getPatientDetails, getPatientDashboard, getPatientMedical, updatePatientContact, updatePatientMedical,
     getMeasures, createDiagnosis, createMeasure, createJournalEntry,
     getDepartments, getStaff, getStaffEmployments, getRoles, createCareContact, admitCareContact, dischargeCareContact, getCurrentUser,
+    getStaffPatients,
 } from "../api.js";
 import { loadCurrentUser } from "../auth.js";
 import {
@@ -12,12 +13,41 @@ import {
 import { can, ROLES } from "../access.js";
 import { OPEN_PATIENT_KEY } from "../app.js";
 
+// Doctors/nurses only see patients they're actually responsible for (via a care
+// contact), not the whole patient register — reception and assistant nurses still
+// see everyone since they work across patients that aren't "theirs" specifically.
+function isScopedToOwnPatients(me) {
+    return me.role === ROLES.DOCTOR || me.role === ROLES.NURSE;
+}
+
+async function fetchMyPatients(me) {
+    if (!me.staffId) return [];
+    const rows = await getStaffPatients(me.staffId);
+    return rows.map((p) => ({ id: p.patientId, firstName: p.firstName, lastName: p.lastName, personalNumber: p.personalNumber, deletedAt: null }));
+}
+
+async function isMyPatient(me, patientId) {
+    if (!me.staffId) return false;
+    try {
+        const rows = await getStaffPatients(me.staffId);
+        return rows.some((p) => String(p.patientId) === String(patientId));
+    } catch {
+        return false;
+    }
+}
+
 export async function render(container) {
     const me = await loadCurrentUser(getCurrentUser);
+    const scoped = isScopedToOwnPatients(me);
 
     const pendingId = sessionStorage.getItem(OPEN_PATIENT_KEY);
     if (pendingId) {
         sessionStorage.removeItem(OPEN_PATIENT_KEY);
+        if (scoped && !(await isMyPatient(me, pendingId))) {
+            await renderList(container, me);
+            toastError(new Error("Patienten är inte kopplad till dig."));
+            return;
+        }
         await renderDetail(container, me, pendingId);
         return;
     }
@@ -29,7 +59,8 @@ export async function render(container) {
 
 async function renderList(container, me) {
     const canCreate = can.createPatient(me);
-    setTopbar("Patienter", "Sök, visa och registrera patienter");
+    const scoped = isScopedToOwnPatients(me);
+    setTopbar("Patienter", scoped ? "Dina patienter — sök och visa" : "Sök, visa och registrera patienter");
 
     container.innerHTML = `
         ${canCreate ? `
@@ -72,8 +103,8 @@ async function renderList(container, me) {
 
         <div class="card">
             <div class="card-header">
-                <h3>Alla patienter</h3>
-                <span class="api-badge">GET /patients</span>
+                <h3>${scoped ? "Mina patienter" : "Alla patienter"}</h3>
+                <span class="api-badge">${scoped ? "GET /staff/{id}/patients" : "GET /patients"}</span>
             </div>
             <div class="table-wrap">
                 <table>
@@ -84,26 +115,26 @@ async function renderList(container, me) {
         </div>
     `;
 
-    loadAllPatients();
+    loadAllPatients(me, scoped);
 
-    document.getElementById("searchPatientBtn").addEventListener("click", () => handleSearch(me, container));
+    document.getElementById("searchPatientBtn").addEventListener("click", () => handleSearch(me, container, scoped));
     document.getElementById("searchPatientInput").addEventListener("keydown", (e) => {
-        if (e.key === "Enter") { e.preventDefault(); handleSearch(me, container); }
+        if (e.key === "Enter") { e.preventDefault(); handleSearch(me, container, scoped); }
     });
-    document.getElementById("clearSearchBtn").addEventListener("click", loadAllPatients);
+    document.getElementById("clearSearchBtn").addEventListener("click", () => loadAllPatients(me, scoped));
 
     const createForm = document.getElementById("createPatientForm");
     if (createForm) createForm.addEventListener("submit", (e) => handleCreatePatient(e, me, container));
 }
 
-async function loadAllPatients() {
+async function loadAllPatients(me, scoped) {
     const tbody = document.getElementById("patients-tbody");
     if (!tbody) return; // page navigated away before this reload landed
     tbody.innerHTML = loadingRow(5);
     try {
-        const patients = await getPatients();
+        const patients = scoped ? await fetchMyPatients(me) : await getPatients();
         if (!patients || patients.length === 0) {
-            tbody.innerHTML = emptyRow(5, "Inga patienter hittades.");
+            tbody.innerHTML = emptyRow(5, scoped ? "Inga patienter kopplade till dig ännu." : "Inga patienter hittades.");
             return;
         }
         tbody.innerHTML = patients.map(patientRow).join("");
@@ -136,15 +167,19 @@ async function openPatientFromRow(id) {
     renderDetail(document.getElementById("content"), me, id);
 }
 
-async function handleSearch(me, container) {
+async function handleSearch(me, container, scoped) {
     const raw = document.getElementById("searchPatientInput").value.trim();
     const tbody = document.getElementById("patients-tbody");
-    if (!raw) { loadAllPatients(); return; }
+    if (!raw) { loadAllPatients(me, scoped); return; }
 
     tbody.innerHTML = loadingRow(5, "Söker...");
     try {
         const looksLikeId = /^\d{1,7}$/.test(raw);
         const patient = looksLikeId ? await getPatientById(raw) : await getPatientByPersonalNumber(raw);
+        if (scoped && !(await isMyPatient(me, patient.id))) {
+            tbody.innerHTML = emptyRow(5, "Ingen patient hittades för ”" + raw + "”.");
+            return;
+        }
         tbody.innerHTML = patientRow(patient);
         attachRowHandlers();
     } catch (err) {
@@ -176,7 +211,7 @@ async function handleCreatePatient(e, me, container) {
 
 // ================= DETAIL VIEW =================
 
-async function renderDetail(container, me, patientId) {
+export async function renderDetail(container, me, patientId, opts = {}) {
     container.innerHTML = `<p class="text-muted">Laddar patient...</p>`;
 
     let details, dashboard, medical;
@@ -237,16 +272,18 @@ async function renderDetail(container, me, patientId) {
         { id: "journal", label: "Journal & diagnoser", show: showJournal },
     ].filter((t) => t.show);
 
+    const defaultTab = opts.defaultTab && tabs.some((t) => t.id === opts.defaultTab) ? opts.defaultTab : tabs[0].id;
+
     setTopbar(`${safe(details.firstName)} ${safe(details.lastName)}`, `#${safe(details.id)} · ${safe(details.personalNumber)}${details.deletedAt ? " · Inaktiv" : ""}`);
 
     container.innerHTML = `
-        <button type="button" class="back-link" id="backToList">← Tillbaka till patienter</button>
+        <button type="button" class="back-link" id="backToList">${opts.backLabel || "← Tillbaka till patienter"}</button>
 
         <div class="tabs">
-            ${tabs.map((t, i) => `<button class="tab-btn ${i === 0 ? "active" : ""}" data-tab="${t.id}">${t.label}</button>`).join("")}
+            ${tabs.map((t) => `<button class="tab-btn ${t.id === defaultTab ? "active" : ""}" data-tab="${t.id}">${t.label}</button>`).join("")}
         </div>
 
-        <div class="tab-panel active" id="tab-contact">
+        <div class="tab-panel ${defaultTab === "contact" ? "active" : ""}" id="tab-contact">
             <div class="card">
                 <div class="card-header">
                     <h3>Kontaktuppgifter</h3>
@@ -257,7 +294,7 @@ async function renderDetail(container, me, patientId) {
         </div>
 
         ${showMedical ? `
-        <div class="tab-panel" id="tab-medical">
+        <div class="tab-panel ${defaultTab === "medical" ? "active" : ""}" id="tab-medical">
             <div class="card">
                 <div class="card-header">
                     <h3>Medicinsk information</h3>
@@ -268,7 +305,7 @@ async function renderDetail(container, me, patientId) {
         </div>` : ""}
 
         ${showCare ? `
-        <div class="tab-panel" id="tab-care">
+        <div class="tab-panel ${defaultTab === "care" ? "active" : ""}" id="tab-care">
             ${canCreateCareContact ? `
             <div class="card mb-4">
                 <div class="card-header">
@@ -287,7 +324,7 @@ async function renderDetail(container, me, patientId) {
         </div>` : ""}
 
         ${showJournal ? `
-        <div class="tab-panel" id="tab-journal">
+        <div class="tab-panel ${defaultTab === "journal" ? "active" : ""}" id="tab-journal">
             <div class="card mb-4">
                 <div class="card-header">
                     <h3>Ny journalpost</h3>
@@ -305,7 +342,10 @@ async function renderDetail(container, me, patientId) {
         </div>` : ""}
     `;
 
-    document.getElementById("backToList").addEventListener("click", () => renderList(container, me));
+    document.getElementById("backToList").addEventListener("click", () => {
+        if (opts.onBack) opts.onBack();
+        else renderList(container, me);
+    });
 
     container.querySelectorAll(".tab-btn").forEach((btn) => {
         btn.addEventListener("click", () => {

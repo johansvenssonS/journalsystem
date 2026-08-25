@@ -13,6 +13,7 @@ const searchInput = document.getElementById("topbarSearchInput");
 const PAGES = {
     dashboard: () => import("./pages/dashboard.js"),
     patients: () => import("./pages/patients.js"),
+    journal: () => import("./pages/journal.js"),
     prescriptions: () => import("./pages/prescriptions.js"),
     referrals: () => import("./pages/referrals.js"),
     appointments: () => import("./pages/appointments.js"),
@@ -24,6 +25,10 @@ const PAGES = {
 // sessionStorage key patients.js checks on mount to auto-open a patient found via
 // the top-bar search — keeps app.js and patients.js decoupled (no shared state file).
 export const OPEN_PATIENT_KEY = "mj_open_patient_query";
+
+// sessionStorage key appointments.js checks on mount to focus its view on a single
+// department — set by the Sjukhusöversikt panel when its "Öppna bokningar" is clicked.
+export const OPEN_DEPARTMENT_KEY = "mj_open_dept_appointments";
 
 let activePage = null;
 let currentUser = null;
