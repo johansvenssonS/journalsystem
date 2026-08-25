@@ -127,3 +127,4 @@ export const createMeasure = (payload) => apiFetch("/measure", { method: "POST",
 
 // ================= Audit log =================
 export const getAuditLogs = () => apiFetch("/audit-logs");
+export const getAuditLogsByPatient = (patientId) => apiFetch(`/audit-logs/patient/${patientId}`);

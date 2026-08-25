@@ -9,6 +9,7 @@ import com.example.journalsystem.exceptions.ResourceNotFoundException;
 import com.example.journalsystem.repository.CareContactRepository;
 import com.example.journalsystem.repository.JournalRepository;
 import com.example.journalsystem.repository.StaffRepository;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
@@ -31,24 +32,38 @@ public class JournalEntryService {
     public static final String ROLE_DOCTOR = "ROLE_doctor";
     public static final String ROLE_NURSE = "ROLE_nurse";
 
+    // audit_log.event is a fixed MySQL ENUM('read','created','updated','deleted') —
+    // the affected table is conveyed separately via the entities lookup row.
+    private static final String AUDIT_ENTITY_TYPE = "journal_entry";
+    private static final String AUDIT_EVENT_READ = "read";
+    private static final String AUDIT_EVENT_CREATED = "created";
+
     public final JournalRepository journalRepository;
     public final JournalEntryMapper journalEntryMapper;
     private final CareContactRepository careContactRepository;
     private final StaffRepository staffRepository;
+    private final AuditLogService auditLogService;
+    private final HttpServletRequest httpRequest;
 
     public JournalEntryService(JournalRepository journalRepository,
                                JournalEntryMapper journalEntryMapper,
                                CareContactRepository careContactRepository,
-                               StaffRepository staffRepository) {
+                               StaffRepository staffRepository,
+                               AuditLogService auditLogService,
+                               HttpServletRequest httpRequest) {
         this.journalRepository = journalRepository;
         this.journalEntryMapper = journalEntryMapper;
         this.careContactRepository = careContactRepository;
         this.staffRepository = staffRepository;
+        this.auditLogService = auditLogService;
+        this.httpRequest = httpRequest;
     }
 
+    /// US-50 — varje läsning av en journalpost loggas med tidpunkt och användare.
     public JournalEntryDTO getJournalEntryById(Long id){
         JournalEntry journalEntry = journalRepository.findById(id)
                 .orElseThrow(()-> new ResourceNotFoundException("Journalpost med id: "+id + " Hittades inte"));
+        auditLogService.record(AUDIT_EVENT_READ, journalEntry.getCareContact().getPatientId(), AUDIT_ENTITY_TYPE, httpRequest);
         return journalEntryMapper.toDto(journalEntry);
     }
 
@@ -88,7 +103,9 @@ public class JournalEntryService {
         journalEntry.setContent(request.getContent());
         journalEntry.setCreatedAt(Timestamp.from(Instant.now()));
 
-        return journalEntryMapper.toDto(journalRepository.save(journalEntry));
+        JournalEntry saved = journalRepository.save(journalEntry);
+        auditLogService.record(AUDIT_EVENT_CREATED, careContact.getPatientId(), AUDIT_ENTITY_TYPE, httpRequest);
+        return journalEntryMapper.toDto(saved);
     }
 
     /// US-22 — en sjuksköterska som inte också är läkare får bara dokumentera

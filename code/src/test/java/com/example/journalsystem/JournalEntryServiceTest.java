@@ -9,7 +9,9 @@ import com.example.journalsystem.exceptions.ResourceNotFoundException;
 import com.example.journalsystem.repository.CareContactRepository;
 import com.example.journalsystem.repository.JournalRepository;
 import com.example.journalsystem.repository.StaffRepository;
+import com.example.journalsystem.service.AuditLogService;
 import com.example.journalsystem.service.JournalEntryService;
+import jakarta.servlet.http.HttpServletRequest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -44,6 +46,12 @@ class JournalEntryServiceTest {
 
     @Mock
     private StaffRepository staffRepository;
+
+    @Mock
+    private AuditLogService auditLogService;
+
+    @Mock
+    private HttpServletRequest httpRequest;
 
     @InjectMocks
     private JournalEntryService journalEntryService;
