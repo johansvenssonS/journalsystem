@@ -6,7 +6,7 @@ import { escapeHtml, safe, statusBadgeClass } from "../ui.js";
 
 const START_HOUR = 7;
 const END_HOUR = 19;
-const HOUR_HEIGHT = 56; // px
+const HOUR_HEIGHT = 90; // px — tall enough that a block's 3 text lines (time/patient/staff) don't get clipped
 const BLOCK_MINUTES = 40; // visual block length — appointments have no explicit duration
 const DAY_LABELS = ["Mån", "Tis", "Ons", "Tors", "Fre", "Lör", "Sön"];
 

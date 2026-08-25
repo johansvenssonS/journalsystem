@@ -164,7 +164,9 @@ function scopedRows() {
 }
 
 function renderBody() {
-    document.getElementById("appt-list-title").textContent = scheduleSearchRows ? scheduleSearchLabel : "Bokningar";
+    const titleEl = document.getElementById("appt-list-title");
+    if (!titleEl) return; // page navigated away before this async render landed
+    titleEl.textContent = scheduleSearchRows ? scheduleSearchLabel : "Bokningar";
     document.getElementById("weekNav").hidden = viewMode !== "week" || !!scheduleSearchRows;
 
     const rows = scopedRows();
@@ -204,6 +206,7 @@ function searchRow(a) {
 
 async function loadAll() {
     const body = document.getElementById("apptBody");
+    if (!body) return; // page navigated away while staff/department options were loading
     body.innerHTML = loadingRow(6);
     try {
         allAppointments = await getAppointments();
@@ -228,10 +231,12 @@ async function handleScheduleSearch() {
     document.getElementById("apptBody").innerHTML = loadingRow(6, "Söker...");
     try {
         scheduleSearchRows = await getScheduleFor(staffId, date);
-        document.getElementById("scheduleClear").hidden = false;
+        const clearBtn = document.getElementById("scheduleClear");
+        if (clearBtn) clearBtn.hidden = false;
         renderBody();
     } catch (err) {
-        document.getElementById("apptBody").innerHTML = errorRow(6, err);
+        const body = document.getElementById("apptBody");
+        if (body) body.innerHTML = errorRow(6, err);
     }
 }
 
@@ -240,6 +245,7 @@ async function loadStaffOptions() {
         staffList = await getStaff();
         staffMap = toMap(staffList);
         const select = document.getElementById("scheduleStaff");
+        if (!select) return; // page navigated away while staff were loading
         select.innerHTML = '<option value="">Välj personal...</option>' +
             staffList.map((s) => `<option value="${s.id}">${s.firstName} ${s.lastName}</option>`).join("");
     } catch {

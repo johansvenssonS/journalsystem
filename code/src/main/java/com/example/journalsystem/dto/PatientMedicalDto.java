@@ -13,11 +13,10 @@ public class PatientMedicalDto {
 
     }
 
-    public PatientMedicalDto(Long id, String address, String allergies) {
+    public PatientMedicalDto(Long id, String allergies, String bloodType) {
         this.id = id;
         this.allergies = allergies;
         this.bloodType = bloodType;
-
     }
 
     public Long getId() {
