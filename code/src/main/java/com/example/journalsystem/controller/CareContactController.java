@@ -36,8 +36,8 @@ public class CareContactController {
         return ResponseEntity.ok(careContactService.getCareContactById(id));
     }
 
-    /// US-12 — endast läkare får skapa vårdkontakt.
-    @PreAuthorize("hasRole('doctor')")
+    /// US-12 — receptionisten (admin-rollen i systemet) skapar vårdkontakten vid inskrivning.
+    @PreAuthorize("hasRole('RECEPTIONIST')")
     @PostMapping("/care-contacts")
     public ResponseEntity<CareContactDTO> createCareContact(
             @Valid @RequestBody CreateCareContactRequest request) {
@@ -47,7 +47,7 @@ public class CareContactController {
     /// US-17 — läkare skriver ut en patient. Bodyn är frivillig; utan den
     /// sätts utskrivningsdatum till nu.
     @PreAuthorize("hasRole('doctor')")
-    @PatchMapping("/care-contacts/{id}/discharged)")
+    @PatchMapping("/care-contacts/{id}/discharged")
     public ResponseEntity<CareContactDTO> dischargeCareContact(
             @PathVariable Long id,
             @RequestBody(required = false) DischargeCareContactRequest request) {

@@ -1,14 +1,16 @@
-import { getReferrals, createReferral, getPatients, getDepartments, getCurrentUser } from "../api.js";
+import { getReferrals, createReferral, respondToReferral, getPatients, getDepartments, getCurrentUser } from "../api.js";
 import { loadCurrentUser } from "../auth.js";
-import { safe, formatDateTime, statusBadge, loadingRow, emptyRow, errorRow, toastSuccess, toMap, setTopbar } from "../ui.js";
+import { safe, formatDateTime, statusBadge, loadingRow, emptyRow, errorRow, toastSuccess, toastError, toMap, setTopbar } from "../ui.js";
 import { can } from "../access.js";
 
 let departmentMap = {};
 let myDepartmentId = null;
+let canRespond = false;
 
 export async function render(container) {
     const me = await loadCurrentUser(getCurrentUser);
     const canCreate = can.createReferral(me);
+    canRespond = can.respondReferral(me);
     myDepartmentId = me.departmentId ?? null;
     setTopbar("Remisser", "Skicka och följ upp remisser mellan avdelningar");
 
@@ -50,8 +52,8 @@ export async function render(container) {
             </div>
             <div class="table-wrap">
                 <table>
-                    <thead><tr><th>Patient</th><th>Från</th><th>Till</th><th>Skickad</th><th>Status</th><th>Svar</th></tr></thead>
-                    <tbody id="ref-tbody">${loadingRow(6)}</tbody>
+                    <thead><tr><th>Patient</th><th>Från</th><th>Till</th><th>Skickad</th><th>Status</th><th>Svar</th>${canRespond ? "<th></th>" : ""}</tr></thead>
+                    <tbody id="ref-tbody">${loadingRow(canRespond ? 7 : 6)}</tbody>
                 </table>
             </div>
         </div>
@@ -81,6 +83,8 @@ function deptName(id) {
 
 function referralRow(r) {
     const touchesMine = myDepartmentId != null && (r.fromDepartmentId === myDepartmentId || r.toDepartmentId === myDepartmentId);
+    // US-62 — only the receiving department's doctors get a "Svara" control, and only while pending.
+    const showRespond = canRespond && r.status === "pending" && myDepartmentId != null && r.toDepartmentId === myDepartmentId;
     return `
         <tr class="${touchesMine ? "row-highlight" : ""}">
             <td>#${safe(r.patientId)}</td>
@@ -89,17 +93,70 @@ function referralRow(r) {
             <td>${formatDateTime(r.sentAt)}</td>
             <td>${statusBadge(r.status)}</td>
             <td>${safe(r.response)}</td>
-        </tr>`;
+            ${canRespond ? `<td class="text-right">${showRespond ? `<button type="button" class="btn btn-secondary btn-sm respond-toggle" data-ref-id="${r.id}">Svara</button>` : ""}</td>` : ""}
+        </tr>
+        ${showRespond ? `
+        <tr class="inline-form-row" id="respond-row-${r.id}" hidden>
+            <td colspan="${canRespond ? 7 : 6}">
+                <form id="respondForm-${r.id}" class="inline-form">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Beslut</label>
+                            <select class="form-control respond-status" required>
+                                <option value="accepted">Acceptera</option>
+                                <option value="declined">Neka</option>
+                            </select>
+                        </div>
+                        <div class="form-group full-width">
+                            <label>Svar / kommentar</label>
+                            <input type="text" class="form-control respond-text" placeholder="t.ex. Bokad tid 2026-09-01">
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-sm">Skicka svar</button>
+                </form>
+            </td>
+        </tr>` : ""}`;
 }
 
 async function loadAll() {
     const tbody = document.getElementById("ref-tbody");
-    tbody.innerHTML = loadingRow(6);
+    const colspan = canRespond ? 7 : 6;
+    tbody.innerHTML = loadingRow(colspan);
     try {
         const rows = await getReferrals();
-        tbody.innerHTML = rows.length ? rows.map(referralRow).join("") : emptyRow(6);
+        tbody.innerHTML = rows.length ? rows.map(referralRow).join("") : emptyRow(colspan);
+        attachRespondHandlers();
     } catch (err) {
-        tbody.innerHTML = errorRow(6, err);
+        tbody.innerHTML = errorRow(colspan, err);
+    }
+}
+
+function attachRespondHandlers() {
+    document.querySelectorAll(".respond-toggle").forEach((btn) => {
+        btn.addEventListener("click", () => {
+            const row = document.getElementById(`respond-row-${btn.dataset.refId}`);
+            if (row) row.hidden = !row.hidden;
+        });
+    });
+    document.querySelectorAll("[id^='respondForm-']").forEach((form) => {
+        const referralId = form.id.replace("respondForm-", "");
+        form.addEventListener("submit", (e) => handleRespond(e, referralId));
+    });
+}
+
+async function handleRespond(e, referralId) {
+    e.preventDefault();
+    const form = e.target;
+    const payload = {
+        status: form.querySelector(".respond-status").value,
+        response: form.querySelector(".respond-text").value.trim(),
+    };
+    try {
+        await respondToReferral(referralId, payload);
+        toastSuccess("Remissen besvarades.");
+        loadAll();
+    } catch (err) {
+        toastError(err);
     }
 }
 

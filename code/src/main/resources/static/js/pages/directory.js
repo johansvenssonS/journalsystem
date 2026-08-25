@@ -1,12 +1,31 @@
-import { getStaff, getStaffEmployments, getDepartments, getCurrentUser } from "../api.js";
+import { getStaff, getStaffEmployments, getDepartments, getDepartmentPatients, getCurrentUser } from "../api.js";
 import { loadCurrentUser } from "../auth.js";
-import { safe, escapeHtml, loadingRow, emptyRow, errorRow, toMap, setTopbar } from "../ui.js";
+import { safe, escapeHtml, formatDateTime, loadingRow, emptyRow, errorRow, toMap, setTopbar } from "../ui.js";
+import { can } from "../access.js";
 
 export async function render(container) {
     const me = await loadCurrentUser(getCurrentUser);
+    const canViewPatients = can.viewDepartmentPatients(me);
     setTopbar("Personal & avdelningar", `Katalog över sjukhusets personal och avdelningar${me.departmentName ? ` — du tillhör ${me.departmentName}` : ""}`);
 
     container.innerHTML = `
+        ${canViewPatients ? `
+        <div class="card mb-4">
+            <div class="card-header">
+                <h3>Patienter på avdelning</h3>
+                <span class="api-badge">GET /departments/{id}/patients</span>
+            </div>
+            <div class="search-row">
+                <select id="deptPatientsSelect" class="form-control flex-grow"><option value="">Laddar avdelningar...</option></select>
+            </div>
+            <div class="table-wrap" style="margin-top:16px;">
+                <table>
+                    <thead><tr><th>Namn</th><th>Personnummer</th><th>Vårdkontakt-ID</th><th>Orsak</th><th>Inskriven</th></tr></thead>
+                    <tbody id="dept-patients-tbody"><tr><td colspan="5" class="text-muted">Välj en avdelning.</td></tr></tbody>
+                </table>
+            </div>
+        </div>` : ""}
+
         <div class="grid-2">
             <div class="card">
                 <div class="card-header">
@@ -33,6 +52,43 @@ export async function render(container) {
 
     loadStaffByDepartment(me);
     loadDepartments(me);
+    if (canViewPatients) loadDeptPatientsForm(me);
+}
+
+// US-20 — vårdpersonal ser vilka patienter som just nu är inskrivna på en given avdelning.
+async function loadDeptPatientsForm(me) {
+    const select = document.getElementById("deptPatientsSelect");
+    try {
+        const departments = await getDepartments();
+        select.innerHTML = '<option value="">Välj avdelning...</option>' +
+            departments.map((d) => `<option value="${d.id}">${escapeHtml(d.name)}</option>`).join("");
+        if (me.departmentId) select.value = String(me.departmentId);
+        if (select.value) loadDeptPatients(select.value);
+    } catch {
+        select.innerHTML = '<option value="">Kunde inte ladda avdelningar</option>';
+    }
+
+    select.addEventListener("change", () => {
+        if (select.value) loadDeptPatients(select.value);
+    });
+}
+
+async function loadDeptPatients(departmentId) {
+    const tbody = document.getElementById("dept-patients-tbody");
+    tbody.innerHTML = loadingRow(5);
+    try {
+        const rows = await getDepartmentPatients(departmentId);
+        tbody.innerHTML = rows.length ? rows.map((p) => `
+            <tr>
+                <td><strong>${safe(p.firstName)} ${safe(p.lastName)}</strong></td>
+                <td>${safe(p.personalNumber)}</td>
+                <td>#${safe(p.careContactId)}</td>
+                <td>${safe(p.reason)}</td>
+                <td>${formatDateTime(p.admitDate)}</td>
+            </tr>`).join("") : emptyRow(5, "Inga patienter inskrivna på avdelningen.");
+    } catch (err) {
+        tbody.innerHTML = errorRow(5, err);
+    }
 }
 
 async function loadStaffByDepartment(me) {

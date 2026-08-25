@@ -37,7 +37,8 @@ public class PatientController {
         return ResponseEntity.status(201).body(patientService.createPatient(createPatientRequest));
     }
 
-    @PreAuthorize("hasRole('doctor')")
+    /// US-10/US-41 — sökning på personnummer används av alla roller som ser Patienter-sidan.
+    @PreAuthorize("hasRole('doctor') OR hasRole('nurse') OR hasRole('assistant_nurse') OR hasRole('RECEPTIONIST')")
     @GetMapping("/personal-number/{personalNumber}")
     public ResponseEntity<PatientResponse> getByPersonalNumber(@PathVariable String personalNumber) {
         return ResponseEntity.ok(patientService.getPatientByPersonalNumber(personalNumber));

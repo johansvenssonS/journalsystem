@@ -3,10 +3,12 @@ package com.example.journalsystem.service;
 import com.example.journalsystem.dto.CreateReferralRequest;
 import com.example.journalsystem.dto.ReferralDTO;
 import com.example.journalsystem.dto.ReferralResponse;
+import com.example.journalsystem.dto.RespondReferralRequest;
 import com.example.journalsystem.entities.Department;
 import com.example.journalsystem.entities.Patient;
 import com.example.journalsystem.entities.Referral;
 import com.example.journalsystem.entities.Staff;
+import com.example.journalsystem.exceptions.DuplicateResourceException;
 import com.example.journalsystem.exceptions.ResourceNotFoundException;
 import com.example.journalsystem.mapper.ReferralMapper;
 import com.example.journalsystem.repository.DepartmentRepository;
@@ -92,5 +94,22 @@ public class ReferralService {
                 saved.getSentAt(),
                 saved.getStatus()
         );
+    }
+
+    /// US-62 — mottagande avdelning tar emot en remiss genom att svara accepted eller declined.
+    public ReferralDTO respondToReferral(Long id, RespondReferralRequest request) {
+        Referral referral = referralRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Remiss med id: " + id + " hittades inte"));
+
+        if (!"pending".equals(referral.getStatus())) {
+            throw new DuplicateResourceException(
+                    "Remiss med id: " + id + " har redan besvarats");
+        }
+
+        referral.setStatus(request.getStatus());
+        referral.setResponse(request.getResponse());
+        referral.setRespondedAt(Instant.now());
+
+        return referralMapper.toDto(referralRepository.save(referral));
     }
 }

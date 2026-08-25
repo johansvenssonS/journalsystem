@@ -3,6 +3,7 @@ package com.example.journalsystem.controller;
 import com.example.journalsystem.dto.CreateReferralRequest;
 import com.example.journalsystem.dto.ReferralDTO;
 import com.example.journalsystem.dto.ReferralResponse;
+import com.example.journalsystem.dto.RespondReferralRequest;
 import com.example.journalsystem.service.ReferralService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
@@ -35,5 +36,14 @@ public class ReferralController {
     @PostMapping
     public ResponseEntity<ReferralResponse> createReferral(@Valid @RequestBody CreateReferralRequest createReferralRequest) {
         return ResponseEntity.status(201).body(referralService.createReferral(createReferralRequest));
+    }
+
+    /// US-62 — mottagande avdelning svarar på en remiss.
+    @PreAuthorize("hasRole('doctor')")
+    @PatchMapping("/{id}/respond")
+    public ResponseEntity<ReferralDTO> respondToReferral(
+            @PathVariable Long id,
+            @Valid @RequestBody RespondReferralRequest respondReferralRequest) {
+        return ResponseEntity.ok(referralService.respondToReferral(id, respondReferralRequest));
     }
 }

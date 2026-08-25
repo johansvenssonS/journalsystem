@@ -53,6 +53,14 @@ export const can = {
     createPrescription: (me) => me?.role === ROLES.DOCTOR,
     lookupPrescription: (me) => me?.role === ROLES.PHARMACY,
     createReferral: (me) => me?.role === ROLES.DOCTOR,
+    // US-62 — samma roll som får skicka en remiss får ta emot/svara på en.
+    respondReferral: (me) => me?.role === ROLES.DOCTOR,
     createAppointment: (me) => me?.role === ROLES.RECEPTIONIST,
     viewAllAppointments: (me) => me?.role === ROLES.RECEPTIONIST,
+    // US-12 — receptionisten (admin-rollen i systemet) skapar vårdkontakten vid inskrivning.
+    createCareContact: (me) => me?.role === ROLES.RECEPTIONIST,
+    // US-17 — läkare skriver ut patienten.
+    dischargeCareContact: (me) => me?.role === ROLES.DOCTOR,
+    // US-20 — vårdpersonal ser vilka patienter som är inskrivna på en avdelning.
+    viewDepartmentPatients: (me) => me?.role === ROLES.DOCTOR || me?.role === ROLES.NURSE,
 };
