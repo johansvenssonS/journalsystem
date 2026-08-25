@@ -51,9 +51,9 @@ export async function render(container) {
                     <div class="form-group">
                         <label for="apStatus">Status</label>
                         <select id="apStatus" class="form-control">
-                            <option value="BOOKED">Bokad</option>
-                            <option value="CONFIRMED">Bekräftad</option>
-                            <option value="CANCELLED">Avbokad</option>
+                            <option value="scheduled">Bokad</option>
+                            <option value="completed">Genomförd</option>
+                            <option value="cancelled_by_staff">Avbokad</option>
                         </select>
                     </div>
                     <div class="form-group full-width">

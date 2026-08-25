@@ -8,7 +8,7 @@ import jakarta.validation.constraints.Size;
 public class RespondReferralRequest {
 
     @NotBlank(message = "status får inte vara tomt")
-    @Pattern(regexp = "accepted|declined", message = "status måste vara accepted eller declined")
+    @Pattern(regexp = "accepted|rejected", message = "status måste vara accepted eller rejected")
     private String status;
 
     @Size(max = 255, message = "response får inte vara längre än 255 tecken")

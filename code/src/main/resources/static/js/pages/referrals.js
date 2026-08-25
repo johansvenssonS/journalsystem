@@ -104,7 +104,7 @@ function referralRow(r) {
                             <label>Beslut</label>
                             <select class="form-control respond-status" required>
                                 <option value="accepted">Acceptera</option>
-                                <option value="declined">Neka</option>
+                                <option value="rejected">Neka</option>
                             </select>
                         </div>
                         <div class="form-group full-width">

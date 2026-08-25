@@ -26,7 +26,7 @@ public class Patient {
     @Column(name = "deleted_at")
     private Instant deletedAt;
 
-    @OneToOne(mappedBy = "patient")
+    @OneToOne(mappedBy = "patient", fetch = FetchType.LAZY)
     private PatientContact patientContact;
 
 

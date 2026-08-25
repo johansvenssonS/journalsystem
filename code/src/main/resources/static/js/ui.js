@@ -58,8 +58,9 @@ export function roleLabel(role) {
 const STATUS_BADGE = {
     ACTIVE: "badge-green", ACCEPTED: "badge-green", ACCEPTERAD: "badge-green", KLAR: "badge-green",
     COMPLETED: "badge-green", CONFIRMED: "badge-green", TRUE: "badge-green",
-    PENDING: "badge-yellow", WAITING: "badge-yellow", SCHEDULED: "badge-yellow", BOOKED: "badge-blue",
-    CANCELLED: "badge-red", CANCELED: "badge-red", DECLINED: "badge-red", REJECTED: "badge-red", FALSE: "badge-gray",
+    PENDING: "badge-yellow", WAITING: "badge-yellow", NO_SHOW: "badge-yellow", BOOKED: "badge-blue", SCHEDULED: "badge-blue",
+    CANCELLED: "badge-red", CANCELED: "badge-red", DECLINED: "badge-red", REJECTED: "badge-red",
+    CANCELLED_BY_STAFF: "badge-red", CANCELLED_BY_PATIENT: "badge-red", FALSE: "badge-gray",
 };
 
 export function statusBadgeClass(status) {

@@ -12,9 +12,9 @@ const DAY_LABELS = ["Mån", "Tis", "Ons", "Tors", "Fre", "Lör", "Sön"];
 
 const LEGEND = [
     { label: "Bokad", cls: "blue" },
-    { label: "Bekräftad", cls: "green" },
-    { label: "Väntar", cls: "yellow" },
-    { label: "Avbokad", cls: "gray" },
+    { label: "Genomförd", cls: "green" },
+    { label: "Uteblev", cls: "yellow" },
+    { label: "Avbokad", cls: "red" },
 ];
 
 export function startOfWeek(d = new Date()) {
