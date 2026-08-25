@@ -1,16 +1,37 @@
 package com.example.journalsystem.dto;
 
+import jakarta.validation.constraints.*;
+
 public class UserAccountRequestDTO {
 
+    @NotBlank
+    @Size(min = 3, max = 50)
     private String username;
+
+    @NotBlank
+    @Size(min = 8, max = 100)
     private String password;
+
+    @NotBlank
+    @Email
+    @Size(max = 100)
     private String email;
 
+    @NotBlank
+    @Size(max = 100)
     private String firstName;
+
+    @NotBlank
+    @Size(max = 100)
     private String lastName;
+
+    @Pattern(regexp = "^\\d{6,8}-?\\d{4}$", message = "Personnumret måste vara i formatet ÅÅMMDD-XXXX eller ÅÅÅÅMMDD-XXXX")
     private String personalNumber;
 
+    @NotBlank
     private String roleTitle;
+
+    @NotNull
     private Long departmentId;
 
     public UserAccountRequestDTO() {

@@ -30,7 +30,7 @@ public class AuthController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity<UserAccountResponseDTO> register(@RequestBody UserAccountRequestDTO userAccountRequestDTO) {
+    public ResponseEntity<UserAccountResponseDTO> register(@Valid @RequestBody UserAccountRequestDTO userAccountRequestDTO) {
 
         return ResponseEntity.status(201).body(userAccountService.createUserAccount(userAccountRequestDTO));
     }
