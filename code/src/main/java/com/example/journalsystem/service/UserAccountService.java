@@ -38,6 +38,44 @@ public class UserAccountService {
         return userAccountMapper.toDto(userAccount);
     }
 
+    public com.example.journalsystem.dto.CurrentUserDTO getCurrentUserProfile(String username) {
+        UserAccount userAccount = userAccountRepository.findByUsername(username)
+                .orElseThrow(() -> new ResourceNotFoundException("Användarnamn " + username + " hittades inte"));
+
+        String role = null;
+        Long staffId = null;
+        String firstName = null;
+        String lastName = null;
+        Long departmentId = null;
+        String departmentName = null;
+
+        try {
+            Staff staff = userAccount.getStaff();
+            staffId = staff.getId();
+            firstName = staff.getFirstName();
+            lastName = staff.getLastName();
+
+            StaffEmployment employment = staff.getStaffEmployment().get(0);
+            role = employment.getRole().getTitle().replaceFirst("^ROLE_", "");
+            departmentId = employment.getDepartment().getId();
+            departmentName = employment.getDepartment().getName();
+        } catch (NullPointerException | IndexOutOfBoundsException e) {
+            // Account has no staff/employment profile (e.g. a patient-linked account) — leave those fields null.
+        }
+
+        return new com.example.journalsystem.dto.CurrentUserDTO(
+                userAccount.getId(),
+                userAccount.getUsername(),
+                userAccount.getEmail(),
+                role,
+                staffId,
+                firstName,
+                lastName,
+                departmentId,
+                departmentName
+        );
+    }
+
     public UserAccountResponseDTO createUserAccount(UserAccountRequestDTO userAccountRequestDTO) {
         UserAccount userAccount = userAccountMapper.toEntity(userAccountRequestDTO);
 

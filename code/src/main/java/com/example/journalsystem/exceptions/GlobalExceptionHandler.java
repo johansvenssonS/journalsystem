@@ -1,7 +1,9 @@
 package com.example.journalsystem.exceptions;
 
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -60,4 +62,27 @@ public class GlobalExceptionHandler {
         ErrorResponse body = new ErrorResponse(403, message, LocalDateTime.now());
         return ResponseEntity.status(403).body(body);
     }
+
+    /// 401 - fel användarnamn eller lösenord vid inloggning
+    @ExceptionHandler(AuthenticationException.class)
+    public ResponseEntity<ErrorResponse> handleAuthentication(AuthenticationException ex) {
+        ErrorResponse body = new ErrorResponse(
+                401,
+                "Fel användarnamn eller lösenord",
+                LocalDateTime.now()
+        );
+        return ResponseEntity.status(401).body(body);
+    }
+
+    /// 409 - t.ex. användarnamn eller email som redan finns (unique constraint i databasen)
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<ErrorResponse> handleDataIntegrityViolation(DataIntegrityViolationException ex) {
+        ErrorResponse body = new ErrorResponse(
+                409,
+                "Användarnamn eller email är redan registrerat",
+                LocalDateTime.now()
+        );
+        return ResponseEntity.status(409).body(body);
+    }
+
 }
