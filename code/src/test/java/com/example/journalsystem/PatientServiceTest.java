@@ -3,9 +3,11 @@ package com.example.journalsystem;
 import com.example.journalsystem.dto.CreatePatientRequest;
 import com.example.journalsystem.dto.PatientResponse;
 import com.example.journalsystem.entities.Patient;
+import com.example.journalsystem.entities.PatientContact;
 import com.example.journalsystem.exceptions.DuplicateResourceException;
 import com.example.journalsystem.exceptions.ResourceNotFoundException;
 import com.example.journalsystem.mapper.PatientMapper;
+import com.example.journalsystem.repository.PatientContactRepository;
 import com.example.journalsystem.repository.PatientRepository;
 import com.example.journalsystem.service.PatientService;
 import org.junit.jupiter.api.BeforeEach;
@@ -32,6 +34,9 @@ class PatientServiceTest {
 
     @Mock
     private PatientMapper patientMapper;
+
+    @Mock
+    private PatientContactRepository patientContactRepository;
 
     @InjectMocks
     private PatientService patientService;
@@ -121,6 +126,7 @@ class PatientServiceTest {
         when(patientMapper.toEntity(request)).thenReturn(patient);
         when(patientRepository.save(patient)).thenReturn(patient);
         when(patientMapper.toDto(patient)).thenReturn(patientResponse);
+        when(patientContactRepository.save(any(PatientContact.class))).thenAnswer(inv -> inv.getArgument(0));
 
         // Act
         PatientResponse result = patientService.createPatient(request);
@@ -130,6 +136,7 @@ class PatientServiceTest {
         assertThat(result.getPersonalNumber()).isEqualTo(request.getPersonalNumber());
         verify(patientRepository, times(1)).existsByPersonalNumber(request.getPersonalNumber());
         verify(patientRepository, times(1)).save(patient);
+        verify(patientContactRepository, times(1)).save(any(PatientContact.class));
     }
 
     @Test

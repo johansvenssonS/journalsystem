@@ -2,12 +2,12 @@ import {
     getPatients, getPatientById, getPatientByPersonalNumber, createPatient,
     getPatientDetails, getPatientDashboard, getPatientMedical, updatePatientContact,
     getMeasures, createDiagnosis, createMeasure, createJournalEntry,
-    getDepartments, getStaff, createCareContact, dischargeCareContact, getCurrentUser,
+    getDepartments, getStaff, getStaffEmployments, getRoles, createCareContact, dischargeCareContact, getCurrentUser,
 } from "../api.js";
 import { loadCurrentUser } from "../auth.js";
 import {
     safe, escapeHtml, formatDate, formatDateTime, toDateInputValue,
-    loadingRow, emptyRow, errorRow, toastError, toastSuccess, setTopbar,
+    loadingRow, emptyRow, errorRow, toastError, toastSuccess, setTopbar, roleLabel,
 } from "../ui.js";
 import { can, ROLES } from "../access.js";
 import { OPEN_PATIENT_KEY } from "../app.js";
@@ -203,10 +203,26 @@ async function renderDetail(container, me, patientId) {
     const showCare = can.viewCareContacts(me) || canCreateCareContact;
 
     let departments = [];
-    let staffList = [];
+    let staffByDept = new Map(); // departmentId -> [{ id, label }] — only staff actually employed there
     if (canCreateCareContact) {
         try {
-            [departments, staffList] = await Promise.all([getDepartments(), getStaff()]);
+            const [depts, staffList, employments, roles] = await Promise.all([
+                getDepartments(), getStaff(), getStaffEmployments(), getRoles(),
+            ]);
+            departments = depts;
+
+            const staffById = new Map(staffList.map((s) => [s.id, s]));
+            const roleLabelById = new Map(roles.map((r) => [r.id, roleLabel(r.title.replace(/^ROLE_/, ""))]));
+
+            employments.forEach((emp) => {
+                const staff = staffById.get(emp.staffId);
+                if (!staff) return;
+                if (!staffByDept.has(emp.departmentId)) staffByDept.set(emp.departmentId, []);
+                staffByDept.get(emp.departmentId).push({
+                    id: staff.id,
+                    label: `${escapeHtml(staff.firstName)} ${escapeHtml(staff.lastName)} (#${staff.id}) — ${escapeHtml(roleLabelById.get(emp.roleId) || "Okänd roll")}`,
+                });
+            });
         } catch {
             // form below falls back to empty selects — submit will simply fail with a clear backend error
         }
@@ -262,7 +278,7 @@ async function renderDetail(container, me, patientId) {
                     <h3>Ny vårdkontakt</h3>
                     <span class="api-badge">POST /care-contacts</span>
                 </div>
-                ${careContactForm(departments, staffList)}
+                ${careContactForm(departments, staffByDept)}
             </div>` : ""}
             <div class="card">
                 <div class="card-header">
@@ -312,6 +328,13 @@ async function renderDetail(container, me, patientId) {
 
     const careContactForm_ = document.getElementById("createCareContactForm");
     if (careContactForm_) careContactForm_.addEventListener("submit", (e) => handleCreateCareContact(e, me, patientId));
+
+    const ccDepartmentSelect = document.getElementById("ccDepartment");
+    if (ccDepartmentSelect) {
+        ccDepartmentSelect.addEventListener("change", () => {
+            document.getElementById("ccResponsible").innerHTML = staffOptionsForDept(staffByDept, ccDepartmentSelect.value);
+        });
+    }
 
     if (canDischargeCareContact) {
         container.querySelectorAll(".discharge-btn").forEach((btn) => {
@@ -412,9 +435,17 @@ function renderCareContacts(contacts, canDischarge) {
     `;
 }
 
-// US-12 — endast läkare skapar vårdkontakter.
-function careContactForm(departments, staffList) {
-    if (!departments.length || !staffList.length) {
+// Ansvarig personal is scoped to whichever avdelning is selected, so reception picks from
+// staff actually employed there instead of guessing — see staffOptionsForDept() below.
+function staffOptionsForDept(staffByDept, departmentId) {
+    const list = staffByDept.get(Number(departmentId)) || [];
+    if (!list.length) return '<option value="">Ingen personal på avdelningen</option>';
+    return '<option value="">Välj personal...</option>' + list.map((s) => `<option value="${s.id}">${s.label}</option>`).join("");
+}
+
+// US-12 — receptionisten (admin-rollen i systemet) skapar vårdkontakten vid inskrivning.
+function careContactForm(departments, staffByDept) {
+    if (!departments.length || staffByDept.size === 0) {
         return '<p class="text-muted">Kunde inte ladda avdelningar/personal — försök ladda om sidan.</p>';
     }
     return `
@@ -430,7 +461,7 @@ function careContactForm(departments, staffList) {
                 <div class="form-group">
                     <label for="ccResponsible">Ansvarig personal</label>
                     <select id="ccResponsible" class="form-control" required>
-                        ${staffList.map((s) => `<option value="${s.id}">${safe(s.firstName)} ${safe(s.lastName)} (#${s.id})</option>`).join("")}
+                        ${staffOptionsForDept(staffByDept, departments[0].id)}
                     </select>
                 </div>
                 <div class="form-group full-width">

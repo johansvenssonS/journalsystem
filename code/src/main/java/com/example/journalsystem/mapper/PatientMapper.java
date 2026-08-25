@@ -42,11 +42,11 @@ public class PatientMapper {
                 patient.getFirstName(),
                 patient.getLastName(),
                 patient.getDeletedAt(),
-                patientContact.getPhone(),
-                patientContact.getEmail(),
-                patientContact.getAddress(),
-                patientContact.getEmergencyName(),
-                patientContact.getEmergencyPhone()
+                patientContact != null ? patientContact.getPhone() : null,
+                patientContact != null ? patientContact.getEmail() : null,
+                patientContact != null ? patientContact.getAddress() : null,
+                patientContact != null ? patientContact.getEmergencyName() : null,
+                patientContact != null ? patientContact.getEmergencyPhone() : null
         );
     }
 }
