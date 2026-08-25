@@ -89,8 +89,9 @@ const GROUPS = [
     {
         name: "Granskning & övrigt",
         endpoints: [
-            { method: "GET", path: "/audit-logs", role: "Inloggad", desc: "Logg över åtkomst och ändringar av journaldata (US-50, US-53)." },
-            { method: "GET", path: "/audit-logs/{id}", role: "Inloggad", desc: "Hämta en specifik loggpost." },
+            { method: "GET", path: "/audit-logs", role: "RECEPTIONIST", desc: "Logg över åtkomst och ändringar av journaldata (US-50, US-53)." },
+            { method: "GET", path: "/audit-logs/{id}", role: "RECEPTIONIST", desc: "Hämta en specifik loggpost." },
+            { method: "GET", path: "/audit-logs/patient/{patientId}", role: "RECEPTIONIST", desc: "Loggposter för en specifik patient (US-53)." },
             { method: "GET", path: "/entities", role: "Inloggad", desc: "Interna entitetsreferenser." },
             { method: "GET", path: "/entities/{id}", role: "Inloggad", desc: "Hämta en entitetsreferens." },
         ],
