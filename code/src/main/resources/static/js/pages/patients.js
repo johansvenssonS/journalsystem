@@ -1,14 +1,14 @@
 import {
     getPatients, getPatientById, getPatientByPersonalNumber, createPatient,
     getPatientDetails, getPatientDashboard, getPatientMedical, updatePatientContact,
-    getMeasures, createDiagnosis, createMeasure, getCurrentUser,
+    getMeasures, createDiagnosis, createMeasure, createJournalEntry, getCurrentUser,
 } from "../api.js";
 import { loadCurrentUser } from "../auth.js";
 import {
     safe, escapeHtml, formatDate, formatDateTime, toDateInputValue,
     loadingRow, emptyRow, errorRow, toastError, toastSuccess, setTopbar,
 } from "../ui.js";
-import { can } from "../access.js";
+import { can, ROLES } from "../access.js";
 import { OPEN_PATIENT_KEY } from "../app.js";
 
 export async function render(container) {
@@ -192,6 +192,7 @@ async function renderDetail(container, me, patientId) {
     const canEditContact = can.editPatientContact(me);
     const canDiagnose = can.diagnose(me);
     const canMeasure = can.registerMeasure(me);
+    const canCreateJournal = can.createJournalEntry(me);
     const showMedical = can.viewPatientMedical(me);
     const showJournal = can.viewPatientJournal(me);
     const showCare = can.viewCareContacts(me);
@@ -251,6 +252,13 @@ async function renderDetail(container, me, patientId) {
 
         ${showJournal ? `
         <div class="tab-panel" id="tab-journal">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h3>Ny journalpost</h3>
+                    <span class="api-badge">POST /journalentry</span>
+                </div>
+                ${journalEntryForm(dashboard.careContacts, canCreateJournal, me.role)}
+            </div>
             <div class="card">
                 <div class="card-header">
                     <h3>Journalanteckningar, diagnoser &amp; åtgärder</h3>
@@ -275,6 +283,9 @@ async function renderDetail(container, me, patientId) {
     if (canEditContact) {
         document.getElementById("contactEditForm").addEventListener("submit", (e) => handleUpdateContact(e, patientId));
     }
+
+    const journalForm = document.getElementById("createJournalEntryForm");
+    if (journalForm) journalForm.addEventListener("submit", (e) => handleCreateJournalEntry(e, me, patientId));
 
     if (showJournal) renderJournalTimeline(dashboard, patientId, me, canDiagnose, canMeasure);
 }
@@ -366,6 +377,66 @@ function renderCareContacts(contacts) {
             </table>
         </div>
     `;
+}
+
+// US-13 — doctors may log any entry type; US-22 — nurses are limited to "note" (backend re-checks this too).
+function journalEntryForm(careContacts, canCreate, role) {
+    if (!canCreate) return "";
+    if (!careContacts || careContacts.length === 0) {
+        return '<p class="text-muted">Ingen vårdkontakt registrerad — en journalpost måste kopplas till en vårdkontakt.</p>';
+    }
+
+    const typeOptions = role === ROLES.NURSE
+        ? '<option value="note">Anteckning</option>'
+        : `
+            <option value="note">Anteckning</option>
+            <option value="examination">Undersökning</option>
+            <option value="operation">Operation</option>`;
+
+    return `
+        <div id="je-alert" class="alert alert-error" hidden></div>
+        <form id="createJournalEntryForm">
+            <div class="form-grid">
+                <div class="form-group full-width">
+                    <label for="jeCareContact">Vårdkontakt</label>
+                    <select id="jeCareContact" class="form-control" required>
+                        ${careContacts.map((c) => `<option value="${c.id}">#${c.id} — ${safe(c.reason)} (${formatDate(c.admitDate)})</option>`).join("")}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="jeType">Typ</label>
+                    <select id="jeType" class="form-control" required>${typeOptions}</select>
+                </div>
+                <div class="form-group full-width">
+                    <label for="jeContent">Anteckning</label>
+                    <textarea id="jeContent" class="form-control" required></textarea>
+                </div>
+            </div>
+            <button type="submit" class="btn btn-primary btn-sm">Spara journalpost</button>
+        </form>
+    `;
+}
+
+async function handleCreateJournalEntry(e, me, patientId) {
+    e.preventDefault();
+    const alertBox = document.getElementById("je-alert");
+    alertBox.hidden = true;
+
+    const payload = {
+        careContactId: Number(document.getElementById("jeCareContact").value),
+        createdBy: me.staffId,
+        type: document.getElementById("jeType").value,
+        content: document.getElementById("jeContent").value.trim(),
+    };
+
+    try {
+        await createJournalEntry(payload);
+        toastSuccess("Journalposten skapades.");
+        renderDetail(document.getElementById("content"), me, patientId);
+    } catch (err) {
+        alertBox.textContent = err.message;
+        alertBox.hidden = false;
+    }
 }
 
 async function renderJournalTimeline(dashboard, patientId, me, canDiagnose, canMeasure) {

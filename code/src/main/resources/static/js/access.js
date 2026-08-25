@@ -46,6 +46,8 @@ export const can = {
     viewPatientMedical: (me) => me?.role === ROLES.DOCTOR || me?.role === ROLES.NURSE,
     viewPatientJournal: (me) => me?.role === ROLES.DOCTOR || me?.role === ROLES.NURSE,
     viewCareContacts: (me) => me?.role === ROLES.DOCTOR || me?.role === ROLES.NURSE || me?.role === ROLES.ASSISTANT_NURSE,
+    // US-13/US-22 — doctors may create any entry type, nurses only "note" (enforced again server-side).
+    createJournalEntry: (me) => me?.role === ROLES.DOCTOR || me?.role === ROLES.NURSE,
     diagnose: (me) => me?.role === ROLES.DOCTOR,
     registerMeasure: (me) => me?.role === ROLES.DOCTOR || me?.role === ROLES.NURSE,
     createPrescription: (me) => me?.role === ROLES.DOCTOR,

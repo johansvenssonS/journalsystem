@@ -102,6 +102,9 @@ export const createPrescription = (payload) => apiFetch("/prescriptions", { meth
 export const getReferrals = () => apiFetch("/referrals");
 export const createReferral = (payload) => apiFetch("/referrals", { method: "POST", body: payload });
 
+// ================= Journal entries (US-13, US-22) =================
+export const createJournalEntry = (payload) => apiFetch("/journalentry", { method: "POST", body: payload });
+
 // ================= Diagnoses & measures =================
 export const getDiagnoses = () => apiFetch("/diagnosis");
 export const createDiagnosis = (payload) => apiFetch("/diagnosis", { method: "POST", body: payload });
