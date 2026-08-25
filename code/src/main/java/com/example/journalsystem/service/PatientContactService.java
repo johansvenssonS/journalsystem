@@ -9,6 +9,7 @@ import com.example.journalsystem.repository.PatientRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class PatientContactService {
@@ -37,8 +38,16 @@ public class PatientContactService {
 
     public PatientContactDto update(Long id, PatientContactDto dto) {
 
+        // Patients created before this row was guaranteed at creation time (or any other gap)
+        // shouldn't be stuck unable to ever save contact info — create it on first save instead.
         var contact = patientContactRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("PatientContact med Id: " + id + " hittades inte"));
+                .orElseGet(() -> {
+                    var patient = patientRepository.findById(id)
+                            .orElseThrow(() -> new ResourceNotFoundException("Patient med Id: " + id + " hittades inte"));
+                    var newContact = new PatientContact();
+                    newContact.setPatient(patient);
+                    return newContact;
+                });
 
         patientContactMapper.updateEntityFromDto(dto, contact);
 

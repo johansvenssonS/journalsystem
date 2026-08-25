@@ -83,6 +83,8 @@ export const getPatientDashboard = (id) => apiFetch(`/patients/${id}/dashboard`)
 export const createPatient = (payload) => apiFetch("/patients", { method: "POST", body: payload });
 
 export const getPatientMedical = (patientId) => apiFetch(`/patient-medicals/${patientId}`);
+export const updatePatientMedical = (patientId, payload) =>
+    apiFetch(`/patient-medicals/${patientId}`, { method: "PUT", body: payload });
 export const updatePatientContact = (patientId, payload) =>
     apiFetch(`/patient-contacts/${patientId}`, { method: "PUT", body: payload });
 
@@ -105,6 +107,7 @@ export const respondToReferral = (id, payload) => apiFetch(`/referrals/${id}/res
 
 // ================= Care contacts (US-12, US-17) =================
 export const createCareContact = (payload) => apiFetch("/care-contacts", { method: "POST", body: payload });
+export const admitCareContact = (id) => apiFetch(`/care-contacts/${id}/admitted`, { method: "PATCH" });
 export const dischargeCareContact = (id) => apiFetch(`/care-contacts/${id}/discharged`, { method: "PATCH" });
 
 // ================= Department roster (US-20) =================
