@@ -47,7 +47,7 @@ public class CareContactController {
     /// US-17 — läkare skriver ut en patient. Bodyn är frivillig; utan den
     /// sätts utskrivningsdatum till nu.
     @PreAuthorize("hasRole('doctor')")
-    @PatchMapping("/care-contacts/{id}/discharged)")
+    @PatchMapping("/care-contacts/{id}/discharged")
     public ResponseEntity<CareContactDTO> dischargeCareContact(
             @PathVariable Long id,
             @RequestBody(required = false) DischargeCareContactRequest request) {

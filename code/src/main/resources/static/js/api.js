@@ -101,6 +101,14 @@ export const createPrescription = (payload) => apiFetch("/prescriptions", { meth
 // ================= Referrals =================
 export const getReferrals = () => apiFetch("/referrals");
 export const createReferral = (payload) => apiFetch("/referrals", { method: "POST", body: payload });
+export const respondToReferral = (id, payload) => apiFetch(`/referrals/${id}/respond`, { method: "PATCH", body: payload });
+
+// ================= Care contacts (US-12, US-17) =================
+export const createCareContact = (payload) => apiFetch("/care-contacts", { method: "POST", body: payload });
+export const dischargeCareContact = (id) => apiFetch(`/care-contacts/${id}/discharged`, { method: "PATCH" });
+
+// ================= Department roster (US-20) =================
+export const getDepartmentPatients = (departmentId) => apiFetch(`/departments/${departmentId}/patients`);
 
 // ================= Journal entries (US-13, US-22) =================
 export const createJournalEntry = (payload) => apiFetch("/journalentry", { method: "POST", body: payload });

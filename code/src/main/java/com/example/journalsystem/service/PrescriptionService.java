@@ -45,11 +45,13 @@ public class PrescriptionService {
                 .orElseThrow(() -> new ResourceNotFoundException("Recept med id: " + id + " hittades inte"));
         return prescriptionMapper.toDto(prescription);
     }
+    /// US-61 — apotekssystemet ska bara se just nu aktiva recept, inte hela receptheistoriken.
     public List<PrescriptionDTO> getPrescriptionByPersonalNumber(String personalNumber) {
         if (!patientRepository.existsByPersonalNumber(personalNumber)){
             throw new ResourceNotFoundException("Person med personnummer:" + personalNumber + " hittades inte");
         }
         return prescriptionRepository.findByPatient_PersonalNumber(personalNumber).stream()
+                .filter(Prescription::getActive)
                 .map(prescriptionMapper::toDto)
                 .toList();
     }

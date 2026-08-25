@@ -1,7 +1,8 @@
 import {
     getPatients, getPatientById, getPatientByPersonalNumber, createPatient,
     getPatientDetails, getPatientDashboard, getPatientMedical, updatePatientContact,
-    getMeasures, createDiagnosis, createMeasure, createJournalEntry, getCurrentUser,
+    getMeasures, createDiagnosis, createMeasure, createJournalEntry,
+    getDepartments, getStaff, createCareContact, dischargeCareContact, getCurrentUser,
 } from "../api.js";
 import { loadCurrentUser } from "../auth.js";
 import {
@@ -193,9 +194,21 @@ async function renderDetail(container, me, patientId) {
     const canDiagnose = can.diagnose(me);
     const canMeasure = can.registerMeasure(me);
     const canCreateJournal = can.createJournalEntry(me);
+    const canCreateCareContact = can.createCareContact(me);
+    const canDischargeCareContact = can.dischargeCareContact(me);
     const showMedical = can.viewPatientMedical(me);
     const showJournal = can.viewPatientJournal(me);
     const showCare = can.viewCareContacts(me);
+
+    let departments = [];
+    let staffList = [];
+    if (canCreateCareContact) {
+        try {
+            [departments, staffList] = await Promise.all([getDepartments(), getStaff()]);
+        } catch {
+            // form below falls back to empty selects — submit will simply fail with a clear backend error
+        }
+    }
 
     const tabs = [
         { id: "contact", label: "Kontaktuppgifter", show: true },
@@ -241,12 +254,20 @@ async function renderDetail(container, me, patientId) {
 
         ${showCare ? `
         <div class="tab-panel" id="tab-care">
+            ${canCreateCareContact ? `
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h3>Ny vårdkontakt</h3>
+                    <span class="api-badge">POST /care-contacts</span>
+                </div>
+                ${careContactForm(departments, staffList)}
+            </div>` : ""}
             <div class="card">
                 <div class="card-header">
                     <h3>Vårdkontakter</h3>
-                    <span class="api-badge">GET /patients/{id}/dashboard</span>
+                    <span class="api-badge">GET /patients/{id}/dashboard · PATCH /care-contacts/{id}/discharged</span>
                 </div>
-                ${renderCareContacts(dashboard.careContacts)}
+                ${renderCareContacts(dashboard.careContacts, canDischargeCareContact)}
             </div>
         </div>` : ""}
 
@@ -286,6 +307,15 @@ async function renderDetail(container, me, patientId) {
 
     const journalForm = document.getElementById("createJournalEntryForm");
     if (journalForm) journalForm.addEventListener("submit", (e) => handleCreateJournalEntry(e, me, patientId));
+
+    const careContactForm_ = document.getElementById("createCareContactForm");
+    if (careContactForm_) careContactForm_.addEventListener("submit", (e) => handleCreateCareContact(e, me, patientId));
+
+    if (canDischargeCareContact) {
+        container.querySelectorAll(".discharge-btn").forEach((btn) => {
+            btn.addEventListener("click", () => handleDischarge(btn.dataset.ccId, me, patientId));
+        });
+    }
 
     if (showJournal) renderJournalTimeline(dashboard, patientId, me, canDiagnose, canMeasure);
 }
@@ -356,14 +386,14 @@ async function handleUpdateContact(e, patientId) {
     }
 }
 
-function renderCareContacts(contacts) {
+function renderCareContacts(contacts, canDischarge) {
     if (!contacts || contacts.length === 0) {
         return '<p class="text-muted">Inga vårdkontakter registrerade.</p>';
     }
     return `
         <div class="table-wrap">
             <table>
-                <thead><tr><th>Inskriven</th><th>Avdelning-ID</th><th>Ansvarig</th><th>Orsak</th><th>Status</th></tr></thead>
+                <thead><tr><th>Inskriven</th><th>Avdelning-ID</th><th>Ansvarig</th><th>Orsak</th><th>Status</th>${canDischarge ? "<th></th>" : ""}</tr></thead>
                 <tbody>
                     ${contacts.map((c) => `
                         <tr>
@@ -372,11 +402,77 @@ function renderCareContacts(contacts) {
                             <td>${c.responsibleId ? "Personal #" + c.responsibleId : "-"}</td>
                             <td>${safe(c.reason)}</td>
                             <td><span class="badge badge-blue">${safe(c.status)}</span></td>
+                            ${canDischarge ? `<td class="text-right">${c.status !== "discharged" ? `<button type="button" class="btn btn-secondary btn-sm discharge-btn" data-cc-id="${c.id}">Skriv ut</button>` : ""}</td>` : ""}
                         </tr>`).join("")}
                 </tbody>
             </table>
         </div>
     `;
+}
+
+// US-12 — endast läkare skapar vårdkontakter.
+function careContactForm(departments, staffList) {
+    if (!departments.length || !staffList.length) {
+        return '<p class="text-muted">Kunde inte ladda avdelningar/personal — försök ladda om sidan.</p>';
+    }
+    return `
+        <div id="cc-alert" class="alert alert-error" hidden></div>
+        <form id="createCareContactForm">
+            <div class="form-grid">
+                <div class="form-group">
+                    <label for="ccDepartment">Avdelning</label>
+                    <select id="ccDepartment" class="form-control" required>
+                        ${departments.map((d) => `<option value="${d.id}">${safe(d.name)}</option>`).join("")}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="ccResponsible">Ansvarig personal</label>
+                    <select id="ccResponsible" class="form-control" required>
+                        ${staffList.map((s) => `<option value="${s.id}">${safe(s.firstName)} ${safe(s.lastName)} (#${s.id})</option>`).join("")}
+                    </select>
+                </div>
+                <div class="form-group full-width">
+                    <label for="ccReason">Orsak</label>
+                    <input type="text" id="ccReason" class="form-control" placeholder="t.ex. Inskrivning för observation">
+                </div>
+            </div>
+            <button type="submit" class="btn btn-primary btn-sm">Skapa vårdkontakt</button>
+        </form>
+    `;
+}
+
+async function handleCreateCareContact(e, me, patientId) {
+    e.preventDefault();
+    const alertBox = document.getElementById("cc-alert");
+    alertBox.hidden = true;
+
+    const payload = {
+        patientId: Number(patientId),
+        departmentId: Number(document.getElementById("ccDepartment").value),
+        responsibleStaffId: Number(document.getElementById("ccResponsible").value),
+        reason: document.getElementById("ccReason").value.trim(),
+    };
+
+    try {
+        await createCareContact(payload);
+        toastSuccess("Vårdkontakten skapades.");
+        renderDetail(document.getElementById("content"), me, patientId);
+    } catch (err) {
+        alertBox.textContent = err.message;
+        alertBox.hidden = false;
+    }
+}
+
+// US-17 — läkare skriver ut patienten från en aktiv vårdkontakt.
+async function handleDischarge(careContactId, me, patientId) {
+    if (!confirm("Skriva ut patienten från denna vårdkontakt?")) return;
+    try {
+        await dischargeCareContact(careContactId);
+        toastSuccess("Patienten skrevs ut.");
+        renderDetail(document.getElementById("content"), me, patientId);
+    } catch (err) {
+        toastError(err);
+    }
 }
 
 // US-13 — doctors may log any entry type; US-22 — nurses are limited to "note" (backend re-checks this too).
