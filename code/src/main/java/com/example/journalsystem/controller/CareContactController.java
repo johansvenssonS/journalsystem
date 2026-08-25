@@ -26,19 +26,19 @@ public class CareContactController {
         this.careContactService = careContactService;
     }
 
-    @GetMapping("/vårdkontakter")
+    @GetMapping("/care-contacts")
     public ResponseEntity<List<CareContactDTO>> getAllCareContacts(){
         return ResponseEntity.ok(careContactService.getAllCareContacts());
     }
 
-    @GetMapping("/vårdkontakter/{id}")
+    @GetMapping("/care-contacts/{id}")
     public ResponseEntity<CareContactDTO> getById(@PathVariable Long id) {
         return ResponseEntity.ok(careContactService.getCareContactById(id));
     }
 
     /// US-12 — endast läkare får skapa vårdkontakt.
     @PreAuthorize("hasRole('doctor')")
-    @PostMapping("/vårdkontakter")
+    @PostMapping("/care-contacts")
     public ResponseEntity<CareContactDTO> createCareContact(
             @Valid @RequestBody CreateCareContactRequest request) {
         return ResponseEntity.status(201).body(careContactService.createCareContact(request));
@@ -47,7 +47,7 @@ public class CareContactController {
     /// US-17 — läkare skriver ut en patient. Bodyn är frivillig; utan den
     /// sätts utskrivningsdatum till nu.
     @PreAuthorize("hasRole('doctor')")
-    @PatchMapping("/vårdkontakter/{id}/utskrivning")
+    @PatchMapping("/care-contacts/{id}/discharged)")
     public ResponseEntity<CareContactDTO> dischargeCareContact(
             @PathVariable Long id,
             @RequestBody(required = false) DischargeCareContactRequest request) {

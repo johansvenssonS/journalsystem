@@ -32,6 +32,7 @@ public class JournalController {
 
     }
 
+    @PreAuthorize("hasRole('doctor') OR hasRole('nurse')")
     @GetMapping("/journalentry/{id}")
     public ResponseEntity<JournalEntryDTO> getJournalEntryById(@PathVariable Long id) {
         return ResponseEntity.ok(journalEntryService.getJournalEntryById(id));

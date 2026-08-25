@@ -97,11 +97,16 @@ public class JournalEntryService {
         if (hasAuthority(ROLE_DOCTOR)) {
             return;
         }
-        if (hasAuthority(ROLE_NURSE) && !TYPE_NOTE.equals(type)) {
-            throw new AccessDeniedException(
-                    "Sjuksköterska får endast skapa journalposter av typen " + TYPE_NOTE
-                            + ". Typen " + type + " kräver läkarbehörighet.");
+        if (hasAuthority(ROLE_NURSE)) {
+            if (!TYPE_NOTE.equals(type)) {
+                throw new AccessDeniedException(
+                        "Sjuksköterska får endast skapa journalposter av typen " + TYPE_NOTE
+                                + ". Typen " + type + " kräver läkarbehörighet.");
+            }
+            return;
         }
+        // Neither doctor nor nurse authority recognized — deny by default.
+        throw new AccessDeniedException("Behörighet saknas för att skapa journalposter.");
     }
 
     private boolean hasAuthority(String authority) {
