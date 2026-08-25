@@ -107,6 +107,7 @@ export const createReferral = (payload) => apiFetch("/referrals", { method: "POS
 export const respondToReferral = (id, payload) => apiFetch(`/referrals/${id}/respond`, { method: "PATCH", body: payload });
 
 // ================= Care contacts (US-12, US-17) =================
+export const getCareContacts = () => apiFetch("/care-contacts");
 export const createCareContact = (payload) => apiFetch("/care-contacts", { method: "POST", body: payload });
 export const admitCareContact = (id) => apiFetch(`/care-contacts/${id}/admitted`, { method: "PATCH" });
 export const dischargeCareContact = (id) => apiFetch(`/care-contacts/${id}/discharged`, { method: "PATCH" });

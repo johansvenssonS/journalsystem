@@ -3,6 +3,7 @@ import { loadCurrentUser } from "../auth.js";
 import { safe, formatDateTime, toDateInputValue, toDateTimeLocalValue, statusBadgeClass, loadingRow, errorRow, toastSuccess, toMap, setTopbar } from "../ui.js";
 import { can } from "../access.js";
 import { renderWeekCalendar, renderListView, startOfWeek, addDays, weekRangeLabel } from "../components/calendar.js";
+import { OPEN_DEPARTMENT_KEY } from "../app.js";
 
 let staffList = [];
 let staffMap = {};
@@ -16,12 +17,17 @@ let deptScope = "mine"; // "mine" | "all"
 let weekStart = startOfWeek(new Date());
 let scheduleSearchRows = null; // set when the staff-schedule search is active; overrides the normal view
 let scheduleSearchLabel = "";
+let focusDepartmentId = null; // set when arriving from the Sjukhusöversikt panel's "Öppna bokningar"
 
 export async function render(container) {
     me = await loadCurrentUser(getCurrentUser);
     setTopbar("Bokningar", "Boka och sök i schemalagda besök");
     const canCreate = can.createAppointment(me);
     deptScope = me.departmentId != null && !can.viewAllAppointments(me) ? "mine" : "all";
+
+    const pendingDeptId = sessionStorage.getItem(OPEN_DEPARTMENT_KEY);
+    focusDepartmentId = pendingDeptId ? Number(pendingDeptId) : null;
+    if (pendingDeptId) sessionStorage.removeItem(OPEN_DEPARTMENT_KEY);
 
     container.innerHTML = `
         ${canCreate ? `
@@ -83,7 +89,7 @@ export async function render(container) {
             <div class="card-header">
                 <h3 id="appt-list-title">Bokningar</h3>
                 <div class="toolbar">
-                    ${myDeptToggleHtml()}
+                    ${focusDepartmentId != null ? `<button type="button" class="btn btn-secondary btn-sm" id="clearDeptFocus">Visa alla avdelningar</button>` : myDeptToggleHtml()}
                     <div class="segmented" id="viewModeToggle">
                         <button type="button" class="segmented-btn ${viewMode === "week" ? "active" : ""}" data-mode="week">Vecka</button>
                         <button type="button" class="segmented-btn ${viewMode === "list" ? "active" : ""}" data-mode="list">Lista</button>
@@ -105,6 +111,7 @@ export async function render(container) {
     wireToolbar();
     document.getElementById("scheduleBtn").addEventListener("click", handleScheduleSearch);
     document.getElementById("scheduleClear").addEventListener("click", clearScheduleSearch);
+    document.getElementById("clearDeptFocus")?.addEventListener("click", () => { focusDepartmentId = null; render(container); });
 
     if (canCreate) {
         loadCreateFormOptions();
@@ -163,6 +170,9 @@ function patientName(id) {
 
 function scopedRows() {
     if (scheduleSearchRows) return scheduleSearchRows;
+    if (focusDepartmentId != null) {
+        return allAppointments.filter((a) => a.departmentId === focusDepartmentId);
+    }
     if (deptScope === "mine" && me.departmentId != null) {
         return allAppointments.filter((a) => a.departmentId === me.departmentId);
     }
@@ -172,7 +182,11 @@ function scopedRows() {
 function renderBody() {
     const titleEl = document.getElementById("appt-list-title");
     if (!titleEl) return; // page navigated away before this async render landed
-    titleEl.textContent = scheduleSearchRows ? scheduleSearchLabel : "Bokningar";
+    titleEl.textContent = scheduleSearchRows
+        ? scheduleSearchLabel
+        : focusDepartmentId != null
+            ? `Bokningar — ${deptName(focusDepartmentId)}`
+            : "Bokningar";
     document.getElementById("weekNav").hidden = viewMode !== "week" || !!scheduleSearchRows;
 
     const rows = scopedRows();

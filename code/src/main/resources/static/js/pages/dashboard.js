@@ -3,6 +3,7 @@ import { loadCurrentUser } from "../auth.js";
 import { safe, formatDateTime, roleLabel, toDateInputValue, statusBadgeClass, loadingRow, emptyRow, errorRow, setTopbar, toMap } from "../ui.js";
 import { can, canAccessPage, ROLES } from "../access.js";
 import { renderWeekCalendar, startOfWeek, addDays, weekRangeLabel } from "../components/calendar.js";
+import { renderHospitalOverview } from "../components/hospitalOverview.js";
 
 let weekStart = startOfWeek(new Date());
 let myAppointments = [];
@@ -87,8 +88,10 @@ export async function render(container) {
 
     const actions = quickActionsFor(me);
     // Doctors/nurses get their own weekly schedule as a calendar (like reception's Bokningar view);
-    // other staff-linked roles (e.g. receptionist) keep the plain today's-bookings list.
+    // receptionist gets the clickable hospital-wide overview; other staff-linked roles
+    // (assistant nurse, pharmacy) keep the original plain today's-bookings layout.
     const hasOwnSchedule = me.role === ROLES.DOCTOR || me.role === ROLES.NURSE;
+    const isReceptionist = me.role === ROLES.RECEPTIONIST;
 
     container.innerHTML = hasOwnSchedule ? `
         ${quickActionsCardHtml(actions)}
@@ -112,6 +115,19 @@ export async function render(container) {
         ${deptPatientsCardHtml()}
 
         ${staffByDeptCardHtml()}
+    ` : isReceptionist ? `
+        ${quickActionsCardHtml(actions)}
+
+        <div class="card mb-4">
+            <div class="card-header">
+                <h3>Sjukhusöversikt</h3>
+                <span class="api-badge">GET /departments</span>
+            </div>
+            <p class="text-muted" style="margin-top:-8px;">Klicka på en avdelning för detaljer och personal i tjänst.</p>
+            <div id="hosp-overview-body">${loadingRow(1)}</div>
+        </div>
+
+        ${activityCardHtml()}
     ` : `
         <div class="stats-grid">
             <div class="stat-card"><div class="stat-label">Patienter i systemet</div><div class="stat-value-row"><h3 id="stat-patients">-</h3></div></div>
@@ -146,13 +162,16 @@ export async function render(container) {
         document.getElementById("dashWeekToday").addEventListener("click", () => { weekStart = startOfWeek(new Date()); renderMySchedule(); });
     }
 
-    loadSchedule(me, hasOwnSchedule);
     if (hasOwnSchedule) {
+        loadSchedule(me, hasOwnSchedule);
         loadDeptPatients(me);
         loadStaffOnMyDepartment(me);
+    } else if (isReceptionist) {
+        loadActivity();
+        renderHospitalOverview(document.getElementById("hosp-overview-body"));
     } else {
-        // Stats grid and audit-log activity only exist on the plain dashboard layout —
-        // doctors/nurses have their own schedule/department view instead.
+        // Original plain layout for assistant nurses / pharmacy.
+        loadSchedule(me, hasOwnSchedule);
         loadStats();
         loadActivity();
     }
