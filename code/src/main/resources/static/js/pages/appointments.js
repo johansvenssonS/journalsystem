@@ -7,6 +7,7 @@ import { renderWeekCalendar, renderListView, startOfWeek, addDays, weekRangeLabe
 let staffList = [];
 let staffMap = {};
 let departmentMap = {};
+let patientMap = {};
 let allAppointments = [];
 let me = null;
 
@@ -99,7 +100,7 @@ export async function render(container) {
         </div>
     `;
 
-    loadStaffOptions().then(loadDepartmentMap).then(loadAll);
+    loadStaffOptions().then(loadDepartmentMap).then(loadPatientMap).then(loadAll);
 
     wireToolbar();
     document.getElementById("scheduleBtn").addEventListener("click", handleScheduleSearch);
@@ -155,6 +156,11 @@ function deptName(id) {
     return departmentMap[id]?.name || (id ? "Avd #" + id : "-");
 }
 
+function patientName(id) {
+    const p = patientMap[id];
+    return p ? `${p.firstName} ${p.lastName}` : null;
+}
+
 function scopedRows() {
     if (scheduleSearchRows) return scheduleSearchRows;
     if (deptScope === "mine" && me.departmentId != null) {
@@ -182,22 +188,23 @@ function renderBody() {
     if (viewMode === "week") {
         document.getElementById("weekLabel").textContent = weekRangeLabel(weekStart);
         body.innerHTML = `<div id="calContainer" class="cal-wrap"></div>`;
-        renderWeekCalendar(document.getElementById("calContainer"), { appointments: rows, weekStart, staffName, deptName });
+        renderWeekCalendar(document.getElementById("calContainer"), { appointments: rows, weekStart, staffName, deptName, patientName });
         return;
     }
 
     body.innerHTML = `<div id="calListContainer"></div>`;
-    renderListView(document.getElementById("calListContainer"), { appointments: rows, weekStart, staffName, deptName });
+    renderListView(document.getElementById("calListContainer"), { appointments: rows, weekStart, staffName, deptName, patientName });
 }
 
 function searchRow(a) {
     const accent = statusBadgeClass(a.status).replace("badge-", "");
+    const title = patientName(a.patientId) || `Patient #${safe(a.patientId)}`;
     return `
         <div class="row-list-item">
             <div class="row-list-time mono">${formatDateTime(a.scheduledAt)}</div>
             <div class="row-list-accent row-list-accent-${accent}"></div>
             <div class="row-list-body">
-                <div class="row-list-title">Patient #${safe(a.patientId)}</div>
+                <div class="row-list-title">${title}</div>
                 <div class="row-list-meta">${[staffName(a.staffId), deptName(a.departmentId), a.note].filter(Boolean).join(" · ")}</div>
             </div>
             <span class="badge ${statusBadgeClass(a.status)}">${safe(a.status)}</span>
@@ -258,6 +265,14 @@ async function loadDepartmentMap() {
         departmentMap = toMap(await getDepartments());
     } catch {
         departmentMap = {};
+    }
+}
+
+async function loadPatientMap() {
+    try {
+        patientMap = toMap(await getPatients());
+    } catch {
+        patientMap = {};
     }
 }
 

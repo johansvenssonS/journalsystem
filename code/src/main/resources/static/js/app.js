@@ -13,6 +13,7 @@ const searchInput = document.getElementById("topbarSearchInput");
 const PAGES = {
     dashboard: () => import("./pages/dashboard.js"),
     patients: () => import("./pages/patients.js"),
+    journal: () => import("./pages/journal.js"),
     prescriptions: () => import("./pages/prescriptions.js"),
     referrals: () => import("./pages/referrals.js"),
     appointments: () => import("./pages/appointments.js"),

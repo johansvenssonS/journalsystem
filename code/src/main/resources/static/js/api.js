@@ -73,6 +73,7 @@ export const getDepartments = () => apiFetch("/departments");
 export const getDepartmentsPublic = () => publicFetch("/departments");
 export const getStaff = () => apiFetch("/staff");
 export const getStaffEmployments = () => apiFetch("/staff-employments");
+export const getStaffPatients = (staffId) => apiFetch(`/staff/${staffId}/patients`);
 
 // ================= Patients =================
 export const getPatients = () => apiFetch("/patients");

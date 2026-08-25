@@ -14,10 +14,13 @@ export const ROLES = {
 export const NAV_CONFIG = [
     { id: "dashboard", label: "Startsida", icon: "⌂", roles: null },
     { id: "patients", label: "Patienter", icon: "☺", roles: [ROLES.DOCTOR, ROLES.NURSE, ROLES.ASSISTANT_NURSE, ROLES.RECEPTIONIST] },
+    { id: "journal", label: "Journal", icon: "📝", roles: [ROLES.DOCTOR, ROLES.NURSE] },
     { id: "prescriptions", label: "Recept", icon: "℞", roles: [ROLES.DOCTOR, ROLES.PHARMACY] },
     { id: "referrals", label: "Remisser", icon: "→", roles: [ROLES.DOCTOR] },
-    { id: "appointments", label: "Bokningar", icon: "🗓", roles: [ROLES.DOCTOR, ROLES.NURSE, ROLES.ASSISTANT_NURSE, ROLES.RECEPTIONIST] },
-    { id: "directory", label: "Personal & avdelningar", icon: "☰", roles: null },
+    // Doctors/nurses don't get a standalone Bokningar/directory page — they get a
+    // read-only, own-department slice of the same data embedded on the Startsida instead.
+    { id: "appointments", label: "Bokningar", icon: "🗓", roles: [ROLES.ASSISTANT_NURSE, ROLES.RECEPTIONIST] },
+    { id: "directory", label: "Personal & avdelningar", icon: "☰", roles: [ROLES.ASSISTANT_NURSE, ROLES.RECEPTIONIST, ROLES.PHARMACY] },
     { id: "audit", label: "Granskningslogg", icon: "◷", roles: [ROLES.RECEPTIONIST] },
     { id: "api-docs", label: "API-dokumentation", icon: "⌘", roles: [ROLES.RECEPTIONIST] },
 ];

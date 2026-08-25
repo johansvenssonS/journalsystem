@@ -11,4 +11,8 @@ public interface CareContactRepository extends JpaRepository<CareContact, Long> 
     /// US-20 — vårdkontakter på en avdelning med en viss status,
     /// t.ex. alla som just nu är inskrivna.
     List<CareContact> findByDepartmentIdAndStatus(Long departmentId, String status);
+
+    /// Vårdkontakter där en viss personal är ansvarig — underlag för
+    /// "mina patienter" i läkarens/sjuksköterskans journalvy.
+    List<CareContact> findByResponsibleStaffId(Long staffId);
 }
