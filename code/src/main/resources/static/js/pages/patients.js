@@ -98,6 +98,7 @@ async function renderList(container, me) {
 
 async function loadAllPatients() {
     const tbody = document.getElementById("patients-tbody");
+    if (!tbody) return; // page navigated away before this reload landed
     tbody.innerHTML = loadingRow(5);
     try {
         const patients = await getPatients();

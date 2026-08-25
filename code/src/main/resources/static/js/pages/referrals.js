@@ -104,7 +104,7 @@ function referralRow(r) {
                             <label>Beslut</label>
                             <select class="form-control respond-status" required>
                                 <option value="accepted">Acceptera</option>
-                                <option value="declined">Neka</option>
+                                <option value="rejected">Neka</option>
                             </select>
                         </div>
                         <div class="form-group full-width">
@@ -120,6 +120,7 @@ function referralRow(r) {
 
 async function loadAll() {
     const tbody = document.getElementById("ref-tbody");
+    if (!tbody) return; // page navigated away while departments were loading
     const colspan = canRespond ? 7 : 6;
     tbody.innerHTML = loadingRow(colspan);
     try {
@@ -164,6 +165,7 @@ async function loadFormOptions(me) {
     const patientSelect = document.getElementById("refPatient");
     const fromSelect = document.getElementById("refFrom");
     const toSelect = document.getElementById("refTo");
+    if (!patientSelect || !fromSelect || !toSelect) return; // page navigated away while departments were loading
 
     try {
         const patients = await getPatients();
@@ -174,7 +176,7 @@ async function loadFormOptions(me) {
     }
 
     const options = Object.entries(departmentMap)
-        .map(([id, name]) => `<option value="${id}">${name}</option>`)
+        .map(([id, dept]) => `<option value="${id}">${dept.name}</option>`)
         .join("");
     fromSelect.innerHTML = options || '<option value="">Inga avdelningar</option>';
     toSelect.innerHTML = options || '<option value="">Inga avdelningar</option>';

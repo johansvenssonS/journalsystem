@@ -73,23 +73,28 @@ export async function render(container) {
     loadActivity();
 }
 
+function setStatText(id, text) {
+    const el = document.getElementById(id);
+    if (el) el.textContent = text; // page may have navigated away while this stat was loading
+}
+
 async function loadStats() {
     getPatients()
-        .then((rows) => (document.getElementById("stat-patients").textContent = rows.length))
-        .catch(() => (document.getElementById("stat-patients").textContent = "-"));
+        .then((rows) => setStatText("stat-patients", rows.length))
+        .catch(() => setStatText("stat-patients", "-"));
 
     loadTodayAppointmentCounts();
 
     getPrescriptions()
-        .then((rows) => (document.getElementById("stat-prescriptions").textContent = rows.filter((p) => p.active).length))
-        .catch(() => (document.getElementById("stat-prescriptions").textContent = "-"));
+        .then((rows) => setStatText("stat-prescriptions", rows.filter((p) => p.active).length))
+        .catch(() => setStatText("stat-prescriptions", "-"));
 
     getReferrals()
         .then((rows) => {
             const open = rows.filter((r) => (r.status || "").toUpperCase() !== "ACCEPTED" && (r.status || "").toUpperCase() !== "ACCEPTERAD");
-            document.getElementById("stat-referrals").textContent = open.length;
+            setStatText("stat-referrals", open.length);
         })
-        .catch(() => (document.getElementById("stat-referrals").textContent = "-"));
+        .catch(() => setStatText("stat-referrals", "-"));
 }
 
 async function loadTodayAppointmentCounts() {
@@ -99,14 +104,11 @@ async function loadTodayAppointmentCounts() {
         const rows = await getAppointments();
         const today = toDateInputValue();
         const todayRows = rows.filter((a) => a.scheduledAt && a.scheduledAt.startsWith(today));
-        document.getElementById("stat-appointments").textContent = todayRows.length;
-
-        const deptStat = document.getElementById("stat-dept-today");
-        if (deptStat) deptStat.textContent = todayRows.filter((a) => a.departmentId === me.departmentId).length;
+        setStatText("stat-appointments", todayRows.length);
+        setStatText("stat-dept-today", todayRows.filter((a) => a.departmentId === me.departmentId).length);
     } catch {
-        document.getElementById("stat-appointments").textContent = "-";
-        const deptStat = document.getElementById("stat-dept-today");
-        if (deptStat) deptStat.textContent = "-";
+        setStatText("stat-appointments", "-");
+        setStatText("stat-dept-today", "-");
     }
 }
 

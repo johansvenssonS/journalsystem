@@ -75,6 +75,7 @@ async function loadDeptPatientsForm(me) {
 
 async function loadDeptPatients(departmentId) {
     const tbody = document.getElementById("dept-patients-tbody");
+    if (!tbody) return; // page navigated away while departments were loading
     tbody.innerHTML = loadingRow(5);
     try {
         const rows = await getDepartmentPatients(departmentId);

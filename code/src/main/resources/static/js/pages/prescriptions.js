@@ -108,6 +108,7 @@ function rxRow(p) {
 
 async function loadAll() {
     const tbody = document.getElementById("rx-tbody");
+    if (!tbody) return; // page navigated away before this reload landed
     tbody.innerHTML = loadingRow(6);
     try {
         const rows = await getPrescriptions();
