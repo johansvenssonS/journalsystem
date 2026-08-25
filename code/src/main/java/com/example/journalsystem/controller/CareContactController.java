@@ -36,8 +36,8 @@ public class CareContactController {
         return ResponseEntity.ok(careContactService.getCareContactById(id));
     }
 
-    /// US-12 — endast läkare får skapa vårdkontakt.
-    @PreAuthorize("hasRole('doctor')")
+    /// US-12 — receptionisten (admin-rollen i systemet) skapar vårdkontakten vid inskrivning.
+    @PreAuthorize("hasRole('RECEPTIONIST')")
     @PostMapping("/care-contacts")
     public ResponseEntity<CareContactDTO> createCareContact(
             @Valid @RequestBody CreateCareContactRequest request) {

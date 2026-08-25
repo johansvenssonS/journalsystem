@@ -198,7 +198,8 @@ async function renderDetail(container, me, patientId) {
     const canDischargeCareContact = can.dischargeCareContact(me);
     const showMedical = can.viewPatientMedical(me);
     const showJournal = can.viewPatientJournal(me);
-    const showCare = can.viewCareContacts(me);
+    // Receptionist can't otherwise see care contacts, but still needs this tab to create one (US-12).
+    const showCare = can.viewCareContacts(me) || canCreateCareContact;
 
     let departments = [];
     let staffList = [];
