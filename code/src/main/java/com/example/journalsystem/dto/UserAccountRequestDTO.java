@@ -4,34 +4,34 @@ import jakarta.validation.constraints.*;
 
 public class UserAccountRequestDTO {
 
-    @NotBlank
-    @Size(min = 3, max = 50)
+    @NotBlank(message = "Användarnamn får inte vara tomt")
+    @Size(min = 3, max = 50, message = "Användarnamn måste vara mellan 3 och 50 tecken")
     private String username;
 
-    @NotBlank
-    @Size(min = 8, max = 100)
+    @NotBlank(message = "Lösenord får inte vara tomt")
+    @Size(min = 8, max = 100, message = "Lösenordet måste vara minst 8 tecken")
     private String password;
 
-    @NotBlank
-    @Email
-    @Size(max = 100)
+    @NotBlank(message = "E-post får inte vara tom")
+    @Email(message = "Ogiltig e-postadress")
+    @Size(max = 100, message = "E-postadressen får max vara 100 tecken")
     private String email;
 
-    @NotBlank
-    @Size(max = 100)
+    @NotBlank(message = "Förnamn får inte vara tomt")
+    @Size(max = 100, message = "Förnamnet får max vara 100 tecken")
     private String firstName;
 
-    @NotBlank
-    @Size(max = 100)
+    @NotBlank(message = "Efternamn får inte vara tomt")
+    @Size(max = 100, message = "Efternamnet får max vara 100 tecken")
     private String lastName;
 
     @Pattern(regexp = "^\\d{6,8}-?\\d{4}$", message = "Personnumret måste vara i formatet ÅÅMMDD-XXXX eller ÅÅÅÅMMDD-XXXX")
     private String personalNumber;
 
-    @NotBlank
+    @NotBlank(message = "Roll måste anges")
     private String roleTitle;
 
-    @NotNull
+    @NotNull(message = "Avdelning måste anges")
     private Long departmentId;
 
     public UserAccountRequestDTO() {
