@@ -15,4 +15,8 @@ public interface CareContactRepository extends JpaRepository<CareContact, Long> 
     /// Vårdkontakter där en viss personal är ansvarig — underlag för
     /// "mina patienter" i läkarens/sjuksköterskans journalvy.
     List<CareContact> findByResponsibleStaffId(Long staffId);
+
+    /// US-2 / US-51 — finns en vårdkontakt med angiven status som knyter
+    /// patienten till avdelningen? Grunden för avdelningsspärren.
+    boolean existsByPatientIdAndDepartmentIdAndStatus(Long patientId, Long departmentId, String status);
 }

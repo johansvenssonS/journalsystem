@@ -18,6 +18,7 @@ public class PatientDashboardService {
     private final JournalEntryService journalEntryService;
     private final DiagnosisService diagnosisService;
     private final AuditLogService auditLogService;
+    private final PatientAccessService patientAccessService;
     private final HttpServletRequest request;
 
     public PatientDashboardService(PatientService patientService,
@@ -25,18 +26,24 @@ public class PatientDashboardService {
                                    JournalEntryService journalEntryService,
                                    DiagnosisService diagnosisService,
                                    AuditLogService auditLogService,
-                                   HttpServletRequest request) {
+                                   HttpServletRequest request,
+                                   PatientAccessService patientAccessService) {
         this.patientService = patientService;
         this.careContactService = careContactService;
         this.journalEntryService = journalEntryService;
         this.diagnosisService = diagnosisService;
         this.auditLogService = auditLogService;
+        this.patientAccessService = patientAccessService;
         this.request = request;
     }
 
     /// US-53 — varje gång en patients journal öppnas loggas vem och när.
     @Transactional(readOnly = true)
     public MedicalDashboardPatientDTO getFullDashboardData(Long patientId) {
+
+        // US-51 — avdelningsspärr innan någon patientdata hämtas.
+        patientAccessService.assertCanAccessPatient(patientId);
+
         MedicalDashboardPatientDTO dashboard = new MedicalDashboardPatientDTO();
 
         // 1. Patient basic details (US-33)

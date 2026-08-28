@@ -24,23 +24,43 @@ public class PatientService {
     private final PatientMapper patientMapper;
     private final PatientContactRepository patientContactRepository;
     private final PatientMedicalRepository patientMedicalRepository;
+    private final PatientAccessService patientAccessService;
 
     public PatientService(PatientRepository patientRepository, PatientMapper patientMapper,
                           PatientContactRepository patientContactRepository,
-                          PatientMedicalRepository patientMedicalRepository) {
+                          PatientMedicalRepository patientMedicalRepository,
+                          PatientAccessService patientAccessService) {
         this.patientRepository = patientRepository;
         this.patientMapper = patientMapper;
         this.patientContactRepository = patientContactRepository;
         this.patientMedicalRepository = patientMedicalRepository;
+        this.patientAccessService = patientAccessService;
     }
 
+    /// US-2 — vårdpersonal ser bara patienter som är inskrivna på deras
+    /// egen avdelning. Receptionisten ser hela listan för registrering
+    /// och bokning, men når ingen medicinsk data (US-42).
+    @Transactional(readOnly = true)
     public List<PatientResponse> getAll(){
-        return patientRepository.findAll().stream()
+        if (!patientAccessService.isClinicalUser()) {
+            return patientRepository.findAll().stream()
+                    .map(patientMapper::toDto)
+                    .toList();
+        }
+        List<Long> allowedIds = patientAccessService.accessiblePatientIds();
+        if (allowedIds.isEmpty()) {
+            return List.of();
+        }
+        return patientRepository.findAllById(allowedIds).stream()
                 .map(patientMapper::toDto)
                 .toList();
     }
 
+    /// US-51 — nekas om patienten inte har en aktiv vårdkontakt på
+    /// den inloggades avdelning.
+    @Transactional(readOnly = true)
     public PatientResponse getPatientById(Long id) {
+        patientAccessService.assertCanAccessPatient(id);
         var patient = patientRepository.findById(id)
                 .orElseThrow(() -> new com.example.journalsystem.exceptions.ResourceNotFoundException("Patient med Id: " + id + " hittades inte"));
         return patientMapper.toDto(patient);
@@ -68,13 +88,20 @@ public class PatientService {
         return patientMapper.toDto(savedPatient);
     }
 
+    /// US-10 kombinerad med US-51 — sökningen är öppen för fler roller,
+    /// men vårdpersonal får bara träff på patienter på sin egen avdelning.
+    @Transactional(readOnly = true)
     public PatientResponse getPatientByPersonalNumber(String personalNumber) {
         var patient = patientRepository.findByPersonalNumber(personalNumber)
                 .orElseThrow(() -> new com.example.journalsystem.exceptions.ResourceNotFoundException("Patient med Id: " + personalNumber + " hittades inte"));
+        patientAccessService.assertCanAccessPatient(patient.getId());
         return patientMapper.toDto(patient);
     }
 
+    /// US-51 — samma avdelningsspärr som getPatientById.
+    @Transactional(readOnly = true)
     public PatientDetailResponse getPatientDetails(Long id){
+        patientAccessService.assertCanAccessPatient(id);
         var patient = patientRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Patient med Id: " + id + " hittades inte"));
         var patientContact = patientContactRepository.findById(id)

@@ -11,6 +11,7 @@ import com.example.journalsystem.mapper.PatientMapper;
 import com.example.journalsystem.repository.PatientContactRepository;
 import com.example.journalsystem.repository.PatientMedicalRepository;
 import com.example.journalsystem.repository.PatientRepository;
+import com.example.journalsystem.service.PatientAccessService;
 import com.example.journalsystem.service.PatientService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -42,6 +43,9 @@ class PatientServiceTest {
 
     @Mock
     private PatientMedicalRepository patientMedicalRepository;
+
+    @Mock
+    private PatientAccessService patientAccessService;
 
     @InjectMocks
     private PatientService patientService;
