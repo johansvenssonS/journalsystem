@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MedJournal</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<div class="app-shell">
+  <aside class="sidebar">
+    <div class="logo-container">
+      <h1 class="logo">MedJournal</h1>
+      <span class="logo-sub">Journalsystem</span>
+    </div>
+
+    <nav class="menu" id="menu">
+      <!-- Rendered by app.js from access.js's NAV_CONFIG, filtered to the logged-in role -->
+    </nav>
+
+    <div class="user-profile">
+      <div id="user-avatar" class="user-avatar">?</div>
+      <div class="user-meta">
+        <div id="current-user-name" class="user-name">Laddar...</div>
+        <div id="current-user-role" class="user-role">&nbsp;</div>
+      </div>
+      <button id="logoutBtn" class="logout-btn" title="Logga ut">⏻</button>
+    </div>
+  </aside>
+
+  <div class="main-col">
+    <header class="topbar">
+      <div class="topbar-title">
+        <h1 id="topbar-title">MedJournal</h1>
+        <p id="topbar-sub">&nbsp;</p>
+      </div>
+      <div class="topbar-spacer"></div>
+      <form id="topbarSearchForm" class="topbar-search" hidden>
+        <span>⌕</span>
+        <input type="text" id="topbarSearchInput" placeholder="Sök patient, personnummer…">
+      </form>
+    </header>
+
+    <main class="content" id="content">
+      <!-- Page modules render into here -->
+    </main>
+  </div>
+</div>
+
+<script type="module" src="js/app.js"></script>
+</body>
+</html>

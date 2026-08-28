@@ -1,0 +1,150 @@
+### US-2 + US-51 — Avdelningsspärr for patientdata
+###
+### Regeln: personal far se en patients data om patienten har en aktiv
+### vardkontakt pa personalens avdelning.
+###
+### Testdata i databasen just nu:
+###   Avdelning 1 (Cardiac)   -> patient 1, 12, 14, 15, 17
+###   Avdelning 2 (Neurology) -> patient 2
+###   Avdelning 4 (Emergency) -> patient 13
+###
+### Tva lakare pa olika avdelningar visar sparren fran bada hallen.
+
+@host = http://localhost:8080
+@pass = Test1234!
+
+### 1. Registrera lakare pa avdelning 1 (kors en gang, 409 = finns redan)
+POST {{host}}/auth/register
+Content-Type: application/json
+
+{
+  "username": "us2.doctor.avd1",
+  "password": "{{pass}}",
+  "email": "us2.doctor.avd1@ward.se",
+  "firstName": "Dag",
+  "lastName": "Kardiolog",
+  "personalNumber": "197505056789",
+  "roleTitle": "ROLE_doctor",
+  "departmentId": 1
+}
+
+### 2. Registrera lakare pa avdelning 2
+POST {{host}}/auth/register
+Content-Type: application/json
+
+{
+  "username": "us2.doctor.avd2",
+  "password": "{{pass}}",
+  "email": "us2.doctor.avd2@ward.se",
+  "firstName": "Nina",
+  "lastName": "Neurolog",
+  "personalNumber": "198006067890",
+  "roleTitle": "ROLE_doctor",
+  "departmentId": 2
+}
+
+### 3. Logga in som lakare pa avdelning 1
+POST {{host}}/auth/login
+Content-Type: application/json
+
+{ "username": "us2.doctor.avd1", "password": "{{pass}}" }
+
+> {% client.global.set("d1", response.body.token); %}
+
+### 4. TILLATET — patient 1 ligger pa avdelning 1. Ska ge 200.
+GET {{host}}/patients/1
+Authorization: Bearer {{d1}}
+
+> {% client.test("200", function(){ client.assert(response.status===200, "Fick "+response.status); }); %}
+
+### 5. NEKAS — patient 2 ligger pa avdelning 2 (Neurology). Ska ge 403.
+GET {{host}}/patients/2
+Authorization: Bearer {{d1}}
+
+> {%
+    client.test("403", function(){ client.assert(response.status===403, "Fick "+response.status); });
+    client.test("Beskrivande meddelande", function(){
+        client.assert(response.body.message && response.body.message.length > 0, "Inget meddelande");
+    });
+%}
+
+### 6. NEKAS — patient 13 ligger pa avdelning 4 (Emergency). Ska ge 403.
+GET {{host}}/patients/13
+Authorization: Bearer {{d1}}
+
+> {% client.test("403", function(){ client.assert(response.status===403, "Fick "+response.status); }); %}
+
+### 7. NEKAS — detaljvyn for patient utanfor avdelningen. Ska ge 403.
+GET {{host}}/patients/2/details
+Authorization: Bearer {{d1}}
+
+> {% client.test("403", function(){ client.assert(response.status===403, "Fick "+response.status); }); %}
+
+### 8. NEKAS — dashboarden for patient utanfor avdelningen. Ska ge 403.
+GET {{host}}/patients/2/dashboard
+Authorization: Bearer {{d1}}
+
+> {% client.test("403", function(){ client.assert(response.status===403, "Fick "+response.status); }); %}
+
+### 9. FILTRERING — listan ska bara innehalla avdelning 1:s patienter.
+GET {{host}}/patients
+Authorization: Bearer {{d1}}
+
+> {%
+    client.test("200", function(){ client.assert(response.status===200, "Fick "+response.status); });
+    var ids = response.body.map(function(p){ return p.id; });
+    client.test("Innehaller patient 1", function(){
+        client.assert(ids.indexOf(1) !== -1, "Patient 1 saknas: " + ids);
+    });
+    client.test("Innehaller INTE patient 2", function(){
+        client.assert(ids.indexOf(2) === -1, "Patient 2 lackte igenom: " + ids);
+    });
+    client.test("Innehaller INTE patient 13", function(){
+        client.assert(ids.indexOf(13) === -1, "Patient 13 lackte igenom: " + ids);
+    });
+%}
+
+### 10. Logga in som lakare pa avdelning 2
+POST {{host}}/auth/login
+Content-Type: application/json
+
+{ "username": "us2.doctor.avd2", "password": "{{pass}}" }
+
+> {% client.global.set("d2", response.body.token); %}
+
+### 11. SPEGELVANT — avdelning 2:s lakare ska na patient 2. Ska ge 200.
+GET {{host}}/patients/2
+Authorization: Bearer {{d2}}
+
+> {% client.test("200", function(){ client.assert(response.status===200, "Fick "+response.status); }); %}
+
+### 12. SPEGELVANT — men INTE patient 1 pa avdelning 1. Ska ge 403.
+GET {{host}}/patients/1
+Authorization: Bearer {{d2}}
+
+> {% client.test("403", function(){ client.assert(response.status===403, "Fick "+response.status); }); %}
+
+### 13. Logga in som receptionist
+POST {{host}}/auth/login
+Content-Type: application/json
+
+{ "username": "us42.reception", "password": "{{pass}}" }
+
+> {% client.global.set("rec", response.body.token); %}
+
+### 14. UNDANTAG — receptionisten ser patienter i hela huset. Ska ge 200.
+GET {{host}}/patients/2
+Authorization: Bearer {{rec}}
+
+> {% client.test("200", function(){ client.assert(response.status===200, "Fick "+response.status); }); %}
+
+### 15. UNDANTAG — och hela listan, oberoende av avdelning.
+GET {{host}}/patients
+Authorization: Bearer {{rec}}
+
+> {%
+    var ids = response.body.map(function(p){ return p.id; });
+    client.test("Ser bade patient 1 och 2", function(){
+        client.assert(ids.indexOf(1) !== -1 && ids.indexOf(2) !== -1, "Fick: " + ids);
+    });
+%}

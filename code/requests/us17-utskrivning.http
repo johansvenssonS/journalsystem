@@ -1,0 +1,86 @@
+### US-17 — Skriv ut patient
+### Satter vardkontaktens status till discharged och fyller i dischargeDate.
+
+@host = http://localhost:8080
+@user = adli.test
+@pass = ANGE_DITT_LOSENORD_HAR
+
+### 1. Logga in som lakare
+POST {{host}}/login
+Content-Type: application/x-www-form-urlencoded
+
+username={{user}}&password={{pass}}
+
+### 2. Skapa en ny vardkontakt att skriva ut (US-12). Ska ge 201.
+POST {{host}}/v%C3%A5rdkontakter
+Content-Type: application/json
+
+{
+  "patientId": 1,
+  "departmentId": 1,
+  "responsibleStaffId": 1,
+  "reason": "Observation over natten"
+}
+
+> {%
+    client.global.set("ccId", response.body.id);
+%}
+
+### 3. HUVUDTESTET — skriv ut utan angivet datum. Ska ge 200 och status discharged.
+PATCH {{host}}/v%C3%A5rdkontakter/{{ccId}}/utskrivning
+
+> {%
+    client.test("200 OK", function() {
+        client.assert(response.status === 200, "Fick " + response.status);
+    });
+    client.test("Status ar discharged", function() {
+        client.assert(response.body.status === "discharged", "Status: " + response.body.status);
+    });
+%}
+
+### 4. FELFALL — skriv ut samma vardkontakt igen. Ska ge 409.
+PATCH {{host}}/v%C3%A5rdkontakter/{{ccId}}/utskrivning
+
+> {%
+    client.test("409 Conflict", function() {
+        client.assert(response.status === 409, "Fick " + response.status);
+    });
+%}
+
+### 5. Skapa en till vardkontakt for att testa angivet datum
+POST {{host}}/v%C3%A5rdkontakter
+Content-Type: application/json
+
+{
+  "patientId": 2,
+  "departmentId": 1,
+  "responsibleStaffId": 1,
+  "reason": "Planerad utskrivning"
+}
+
+> {%
+    client.global.set("ccId2", response.body.id);
+%}
+
+### 6. Skriv ut med angivet datum. Ska ge 200.
+PATCH {{host}}/v%C3%A5rdkontakter/{{ccId2}}/utskrivning
+Content-Type: application/json
+
+{
+  "dischargeDate": "2026-08-22T14:30:00"
+}
+
+> {%
+    client.test("200 OK", function() {
+        client.assert(response.status === 200, "Fick " + response.status);
+    });
+%}
+
+### 7. FELFALL — vardkontakt som inte finns. Ska ge 404.
+PATCH {{host}}/v%C3%A5rdkontakter/99999/utskrivning
+
+> {%
+    client.test("404 Not Found", function() {
+        client.assert(response.status === 404, "Fick " + response.status);
+    });
+%}

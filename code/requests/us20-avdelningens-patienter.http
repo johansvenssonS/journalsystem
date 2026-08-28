@@ -1,0 +1,41 @@
+### US-20 — Patienter inskrivna pa avdelningen
+
+@host = http://localhost:8080
+@user = adli.test
+@pass = ANGE_DITT_LOSENORD_HAR
+
+### 1. Logga in
+POST {{host}}/login
+Content-Type: application/x-www-form-urlencoded
+
+username={{user}}&password={{pass}}
+
+### 2. HUVUDTESTET — patienter pa avdelning 1. Ska ge 200 och en lista.
+GET {{host}}/departments/1/patients
+
+> {%
+    client.test("200 OK", function() {
+        client.assert(response.status === 200, "Fick " + response.status);
+    });
+    client.test("Svaret ar en lista", function() {
+        client.assert(Array.isArray(response.body), "Inte en array");
+    });
+%}
+
+### 3. Avdelning utan inskrivna. Ska ge 200 och tom lista.
+GET {{host}}/departments/5/patients
+
+> {%
+    client.test("200 OK", function() {
+        client.assert(response.status === 200, "Fick " + response.status);
+    });
+%}
+
+### 4. FELFALL — avdelning som inte finns. Ska ge 404.
+GET {{host}}/departments/99999/patients
+
+> {%
+    client.test("404 Not Found", function() {
+        client.assert(response.status === 404, "Fick " + response.status);
+    });
+%}

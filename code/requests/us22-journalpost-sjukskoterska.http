@@ -1,0 +1,115 @@
+### US-22 — Sjukskoterska skapar ANTECKNING
+### Sjukskoterskan ska fa skapa journalpost av typen note,
+### men nekas for examination och operation.
+
+@host = http://localhost:8080
+@nurse = adli.nurse
+@pass = ANGE_DITT_LOSENORD_HAR
+
+### 1. Registrera ett sjukskoterskekonto (kors en gang)
+POST {{host}}/auth/register
+Content-Type: application/json
+
+{
+  "username": "{{nurse}}",
+  "password": "{{pass}}",
+  "email": "adli.nurse@ward.se",
+  "firstName": "Adli",
+  "lastName": "Testskoterska",
+  "personalNumber": "199202022345",
+  "roleTitle": "nurse",
+  "departmentId": 1
+}
+
+### 2. Logga in som sjukskoterska
+POST {{host}}/login
+Content-Type: application/x-www-form-urlencoded
+
+username={{nurse}}&password={{pass}}
+
+### 3. Kontrollera inloggning
+GET {{host}}/auth/me
+
+### 4. HUVUDTESTET — skapa ANTECKNING som sjukskoterska. Ska ge 201.
+POST {{host}}/journalentry
+Content-Type: application/json
+
+{
+  "careContactId": 1,
+  "createdBy": 3,
+  "type": "note",
+  "content": "Patienten har fatt sin medicin kl 08:00. Mar battre."
+}
+
+> {%
+    client.test("201 Created", function() {
+        client.assert(response.status === 201, "Fick " + response.status);
+    });
+    client.test("Typ ar note", function() {
+        client.assert(response.body.type === "note", "Typ: " + response.body.type);
+    });
+%}
+
+### 5. NEKAS — sjukskoterska forsoker skapa UNDERSOKNING. Ska ge 403.
+POST {{host}}/journalentry
+Content-Type: application/json
+
+{
+  "careContactId": 1,
+  "createdBy": 3,
+  "type": "examination",
+  "content": "EKG utfort"
+}
+
+> {%
+    client.test("403 Forbidden", function() {
+        client.assert(response.status === 403, "Fick " + response.status);
+    });
+    client.test("Beskrivande felmeddelande", function() {
+        client.assert(response.body.message !== undefined
+            && response.body.message.length > 0, "Inget felmeddelande");
+    });
+%}
+
+### 6. NEKAS — sjukskoterska forsoker skapa OPERATION. Ska ge 403.
+POST {{host}}/journalentry
+Content-Type: application/json
+
+{
+  "careContactId": 1,
+  "createdBy": 3,
+  "type": "operation",
+  "content": "Angiografi"
+}
+
+> {%
+    client.test("403 Forbidden", function() {
+        client.assert(response.status === 403, "Fick " + response.status);
+    });
+%}
+
+### 7. Logga ut, sedan in som lakare igen
+POST {{host}}/logout
+
+### 8. Logga in som lakare
+POST {{host}}/login
+Content-Type: application/x-www-form-urlencoded
+
+username=adli.test&password={{pass}}
+
+### 9. REGRESSION — lakaren ska fortfarande fa skapa OPERATION. Ska ge 201.
+POST {{host}}/journalentry
+Content-Type: application/json
+
+{
+  "careContactId": 1,
+  "createdBy": 1,
+  "type": "operation",
+  "content": "Angiografi genomford."
+}
+
+> {%
+    client.test("201 Created", function() {
+        client.assert(response.status === 201, "Fick " + response.status);
+    });
+%}

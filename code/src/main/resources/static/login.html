@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MedJournal — Logga in</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="landing.css">
+</head>
+<body>
+
+<div class="landing">
+
+  <section class="landing-hero">
+    <div class="landing-hero-bg"><img src="img/hero-hospital.jpg" alt="Flygbild över ett sjukhusområde"></div>
+    <div class="landing-hero-overlay-v"></div>
+    <div class="landing-hero-overlay-h"></div>
+
+    <header class="landing-header">
+      <div class="landing-brand">
+        <div class="landing-brand-name">MedJournal</div>
+        <div class="landing-brand-tag">Journalsystem för sjukhuspersonal</div>
+      </div>
+      <nav class="landing-nav">
+        <a href="#logga-in" data-scroll-tab="login">Logga in</a>
+        <a href="#logga-in" data-scroll-tab="login">Support</a>
+      </nav>
+    </header>
+
+    <div class="landing-hero-content">
+      <h1>Ett journalsystem byggt för vårdens vardag.</h1>
+      <p>Patienter, journalanteckningar, recept, remisser och bokningar — samlat på ett ställe, med behörighet anpassad efter din roll.</p>
+      <div class="landing-cta-row">
+        <a href="#logga-in" class="btn btn-primary" data-scroll-tab="login">Logga in</a>
+        <a href="#logga-in" class="btn btn-outline-light" data-scroll-tab="register">Registrera dig</a>
+      </div>
+    </div>
+
+    <div class="landing-scroll-hint"><span>Scrolla</span></div>
+  </section>
+
+  <section id="logga-in" class="landing-auth-section">
+    <div class="landing-auth-grid">
+
+      <div class="landing-features-col">
+        <div class="landing-eyebrow">Behörighet och spårbarhet</div>
+        <ul class="auth-features">
+          <li><span class="icon">✓</span> Rollbaserad åtkomst för läkare, sjuksköterska, undersköterska, receptionist och apotek</li>
+          <li><span class="icon">✓</span> Fullständig patientöversikt med vårdkontakter, diagnoser och journalanteckningar</li>
+          <li><span class="icon">✓</span> Spårbarhet genom en granskningslogg (audit log)</li>
+        </ul>
+      </div>
+
+      <div class="landing-auth-card-col">
+        <div class="auth-card">
+          <div class="auth-tabs">
+            <button type="button" class="auth-tab active" data-tab="login">Logga in</button>
+            <button type="button" class="auth-tab" data-tab="register">Registrera dig</button>
+          </div>
+
+          <div id="tab-login">
+            <h2>Välkommen tillbaka</h2>
+            <p class="sub">Logga in med ditt personalkonto.</p>
+            <div id="login-alert" class="alert alert-error" hidden></div>
+            <form id="loginForm" class="auth-form">
+              <div class="form-group">
+                <label for="loginUsername">Användarnamn</label>
+                <input type="text" id="loginUsername" class="form-control" autocomplete="username" required>
+              </div>
+              <div class="form-group">
+                <label for="loginPassword">Lösenord</label>
+                <input type="password" id="loginPassword" class="form-control" autocomplete="current-password" required>
+              </div>
+              <button type="submit" class="btn btn-primary">Logga in</button>
+            </form>
+          </div>
+
+          <div id="tab-register" hidden>
+            <h2>Skapa personalkonto</h2>
+            <p class="sub">Registrera dig som anställd på en avdelning.</p>
+            <div id="register-alert" class="alert alert-error" hidden></div>
+            <div id="register-success" class="alert alert-success" hidden></div>
+            <form id="registerForm" class="auth-form">
+              <div class="form-group">
+                <label for="regFirstName">Förnamn</label>
+                <input type="text" id="regFirstName" class="form-control" required>
+              </div>
+              <div class="form-group">
+                <label for="regLastName">Efternamn</label>
+                <input type="text" id="regLastName" class="form-control" required>
+              </div>
+              <div class="form-group">
+                <label for="regPersonalNumber">Personnummer</label>
+                <input type="text" id="regPersonalNumber" class="form-control" placeholder="YYYYMMDD-XXXX" required>
+              </div>
+              <div class="form-group">
+                <label for="regRole">Roll</label>
+                <select id="regRole" class="form-control" required>
+                  <option value="">Välj roll...</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="regDepartment">Avdelning</label>
+                <select id="regDepartment" class="form-control" required>
+                  <option value="">Välj avdelning...</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="regUsername">Användarnamn</label>
+                <input type="text" id="regUsername" class="form-control" autocomplete="username" required>
+              </div>
+              <div class="form-group">
+                <label for="regEmail">E-post</label>
+                <input type="email" id="regEmail" class="form-control" autocomplete="email" required>
+              </div>
+              <div class="form-group">
+                <label for="regPassword">Lösenord</label>
+                <input type="password" id="regPassword" class="form-control" autocomplete="new-password" required>
+              </div>
+              <button type="submit" class="btn btn-primary">Skapa konto</button>
+            </form>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="landing-footer">MedJournal &middot; internt journalsystem</div>
+  </section>
+
+</div>
+
+<script type="module" src="js/login.js"></script>
+<script src="js/landing.js"></script>
+</body>
+</html>
