@@ -26,6 +26,7 @@ public class JournalController {
         this.journalEntryService = journalEntryService;
     }
 
+    @PreAuthorize("hasRole('doctor') OR hasRole('nurse')")
     @GetMapping("journalentry")
     public ResponseEntity<List<JournalEntryDTO>> getAllJournalEntries() {
         return ResponseEntity.ok(journalEntryService.getAllJournalEntries());
