@@ -1,0 +1,119 @@
+### US-42 — Receptionisten ska nekas journalposter, diagnoser och medicinsk data
+###
+### Kor uppifran och ner. Steg 1-2 registrerar testkonton och behover
+### bara koras en gang; far du 409 finns kontot redan, hoppa vidare.
+### Rolltitlarna maste matcha role-tabellen exakt, inklusive ROLE_-prefixet.
+
+@host = http://localhost:8080
+@pass = Test1234!
+
+### 1. Registrera ett receptionistkonto
+POST {{host}}/auth/register
+Content-Type: application/json
+
+{
+  "username": "us42.reception",
+  "password": "{{pass}}",
+  "email": "us42.reception@ward.se",
+  "firstName": "Rita",
+  "lastName": "Reception",
+  "personalNumber": "199303034567",
+  "roleTitle": "ROLE_RECEPTIONIST",
+  "departmentId": 1
+}
+
+### 2. Registrera ett lakarkonto
+POST {{host}}/auth/register
+Content-Type: application/json
+
+{
+  "username": "us42.doctor",
+  "password": "{{pass}}",
+  "email": "us42.doctor@ward.se",
+  "firstName": "Doris",
+  "lastName": "Doktor",
+  "personalNumber": "198404045678",
+  "roleTitle": "ROLE_doctor",
+  "departmentId": 1
+}
+
+### 3. Logga in som receptionist
+POST {{host}}/auth/login
+Content-Type: application/json
+
+{ "username": "us42.reception", "password": "{{pass}}" }
+
+> {%
+    client.test("200 OK", function() {
+        client.assert(response.status === 200, "Fick " + response.status);
+    });
+    client.global.set("recToken", response.body.token);
+%}
+
+### 4. NEKAS — diagnoser. Ska ge 403.
+GET {{host}}/diagnosis
+Authorization: Bearer {{recToken}}
+
+> {% client.test("403", function() { client.assert(response.status === 403, "Fick " + response.status); }); %}
+
+### 5. NEKAS — enskild diagnos. Ska ge 403.
+GET {{host}}/diagnosis/1
+Authorization: Bearer {{recToken}}
+
+> {% client.test("403", function() { client.assert(response.status === 403, "Fick " + response.status); }); %}
+
+### 6. NEKAS — journalposter. Ska ge 403.
+GET {{host}}/journalentry
+Authorization: Bearer {{recToken}}
+
+> {% client.test("403", function() { client.assert(response.status === 403, "Fick " + response.status); }); %}
+
+### 7. NEKAS — medicinska uppgifter. Ska ge 403.
+GET {{host}}/patient-medicals
+Authorization: Bearer {{recToken}}
+
+> {% client.test("403", function() { client.assert(response.status === 403, "Fick " + response.status); }); %}
+
+### 8. NEKAS — atgarder. Ska ge 403.
+GET {{host}}/measure
+Authorization: Bearer {{recToken}}
+
+> {% client.test("403", function() { client.assert(response.status === 403, "Fick " + response.status); }); %}
+
+### 9. NEKAS — patientens medicinska oversikt. Ska ge 403.
+GET {{host}}/patients/1/dashboard
+Authorization: Bearer {{recToken}}
+
+> {% client.test("403", function() { client.assert(response.status === 403, "Fick " + response.status); }); %}
+
+### 10. TILLATET — receptionisten ska fortfarande na kontaktuppgifter. Ska ge 200.
+GET {{host}}/patient-contacts/1
+Authorization: Bearer {{recToken}}
+
+> {% client.test("200", function() { client.assert(response.status === 200, "Fick " + response.status); }); %}
+
+### 11. Logga in som lakare
+POST {{host}}/auth/login
+Content-Type: application/json
+
+{ "username": "us42.doctor", "password": "{{pass}}" }
+
+> {% client.global.set("docToken", response.body.token); %}
+
+### 12. REGRESSION — lakaren ska na allt ovan. Ska ge 200.
+GET {{host}}/diagnosis
+Authorization: Bearer {{docToken}}
+
+> {% client.test("200", function() { client.assert(response.status === 200, "Fick " + response.status); }); %}
+
+### 13. REGRESSION — journalposter som lakare. Ska ge 200.
+GET {{host}}/journalentry
+Authorization: Bearer {{docToken}}
+
+> {% client.test("200", function() { client.assert(response.status === 200, "Fick " + response.status); }); %}
+
+### 14. REGRESSION — dashboard som lakare. Ska ge 200.
+GET {{host}}/patients/1/dashboard
+Authorization: Bearer {{docToken}}
+
+> {% client.test("200", function() { client.assert(response.status === 200, "Fick " + response.status); }); %}

@@ -18,11 +18,13 @@ public class PatientMedicalController {
         this.patientMedicalService = patientMedicalService;
     }
 
+    @PreAuthorize("hasAnyRole('doctor','nurse')")
     @GetMapping
     public ResponseEntity<List<PatientMedicalDto>> getAll()  {
         return ResponseEntity.ok(patientMedicalService.getAll());
     }
 
+    @PreAuthorize("hasAnyRole('doctor','nurse')")
     @GetMapping("/{id}")
     public ResponseEntity<PatientMedicalDto> getById(@PathVariable Long id) {
         return ResponseEntity.ok(patientMedicalService.getPatientMedicalById(id));

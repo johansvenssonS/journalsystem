@@ -22,12 +22,14 @@ public class MeasureController {
         this.measureService = measureService;
     }
 
+    @PreAuthorize("hasAnyRole('doctor','nurse')")
     @GetMapping()
     public ResponseEntity<List<MeasureDTO>> getAllMeasures() {
         return ResponseEntity.ok(measureService.getAllMeasures());
         
     }
 
+    @PreAuthorize("hasAnyRole('doctor','nurse')")
     @GetMapping("/{id}")
     public ResponseEntity<MeasureDTO> getMeasureById(@PathVariable Long id) {
         return ResponseEntity.ok(measureService.getMeasureById(id));

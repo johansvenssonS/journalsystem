@@ -21,12 +21,14 @@ public class DiagnosisController {
         this.diagnosisService = diagnosisService;
     }
 
+    @PreAuthorize("hasAnyRole('doctor','nurse')")
     @GetMapping()
     public ResponseEntity<List<DiagnosisDTO>> getAllDiagnosis() {
         return ResponseEntity.ok(diagnosisService.getAllDiagnosis());
         
     }
 
+    @PreAuthorize("hasAnyRole('doctor','nurse')")
     @GetMapping("/{id}")
     public ResponseEntity<DiagnosisDTO> getDiagnosisById(@PathVariable Long id) {
         return ResponseEntity.ok(diagnosisService.getDiagnosisById(id));

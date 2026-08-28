@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 @RestController
 @RequestMapping("/patients")
@@ -18,6 +19,7 @@ public class PatientDashboardController {
         this.patientDashboardService = patientDashboardService;
     }
 
+    @PreAuthorize("hasAnyRole('doctor','nurse')")
     @GetMapping("/{patientId}/dashboard")
     public ResponseEntity<MedicalDashboardPatientDTO> getPatientDashboard(@PathVariable Long patientId) {
         MedicalDashboardPatientDTO dashboardData = patientDashboardService.getFullDashboardData(patientId);
